@@ -137,7 +137,7 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   }
 
   (*partialAttributeList)[lenghtOforiginalList + 5 +
-                          attributeDescriptionLength] = 0xA0; // set A0
+                          attributeDescriptionLength] = 0x31; // set A0
   (*partialAttributeList)[lenghtOforiginalList + 6 +
                           attributeDescriptionLength] =
       attributeValueLength + 2; // length of sequence
@@ -451,7 +451,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(11070);
+  sa.sin6_port = htons(389);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);
