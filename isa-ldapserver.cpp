@@ -48,13 +48,14 @@ void SigCatcher(int n) {
 /// @param partialAttributeList pointer to empty attribute list
 /// @return 0 if success, -1 if error
 int InitSearchResultEntry(unsigned char **partialAttributeList,
-                          char *messageID) {
+                          char *messageID, unsigned char *LDAPDN,
+              int LDAPDNLength) {
   // 64 04 04 00 30 00
 
   (*partialAttributeList) = (unsigned char *)malloc(11 + messageID[1]);
 
   (*partialAttributeList)[0] = 0x30;
-  (*partialAttributeList)[1] = 0x09; // length of sequence
+  (*partialAttributeList)[1] = 0x09 + LDAPDNLength; // length of sequence
   // message ID
   (*partialAttributeList)[2] = 0x02;
   (*partialAttributeList)[3] = messageID[1]; // length of message ID
@@ -77,13 +78,19 @@ int InitSearchResultEntry(unsigned char **partialAttributeList,
   }
 
   (*partialAttributeList)[5 + x] = 0x64; // Aplication 4 tag
-  (*partialAttributeList)[6 + x] = 0x04; // length of PartialAttributeList
+  (*partialAttributeList)[6 + x] = 0x04 + LDAPDNLength; // length of PartialAttributeList
   // LDAPN
   (*partialAttributeList)[7 + x] = 0x04; // octet string
-  (*partialAttributeList)[8 + x] = 0x00; // length of string
+  (*partialAttributeList)[8 + x] = LDAPDNLength; // length of string
+
+  int i = 0;
+    for (; i < LDAPDNLength; i++) {
+        (*partialAttributeList)[9 + x + i] = LDAPDN[i];
+    }
+
   // sequence
-  (*partialAttributeList)[9 + x] = 0x30;
-  (*partialAttributeList)[10 + x] = 0x00; // length of sequence
+  (*partialAttributeList)[9 + x +i] = 0x30;
+  (*partialAttributeList)[10 + x + i] = 0x00; // length of sequence
   // TODO
   return 0;
 }
@@ -96,20 +103,26 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
 
   int increaseBy = 8 + attributeValueLength + attributeDescriptionLength;
   unsigned char *newPartialAttributeList =
-      (unsigned char *)realloc((*partialAttributeList), increaseBy);
+      (unsigned char *)realloc((*partialAttributeList), increaseBy + (*partialAttributeList)[1] +2); //todo: support longform
   // error checking
   if (newPartialAttributeList == NULL) {
     return -1;
   }
   (*partialAttributeList) = newPartialAttributeList;
 
+  int positionOfSequence = 2 + (*partialAttributeList)[3] + 2;
+  positionOfSequence += (*partialAttributeList)[positionOfSequence + 3] + 2 +2 +1;
+
+
+
+
   int lenghtOforiginalList =
       (*partialAttributeList)[1] + 1; // TODO: support ints
   (*partialAttributeList)[1] += increaseBy;
-  (*partialAttributeList)[6] += increaseBy;
+  (*partialAttributeList)[6] += increaseBy; // TODO support longform
 
   // increase length of sequence at the end of partialAttributeList
-  (*partialAttributeList)[lenghtOforiginalList] += increaseBy;
+  (*partialAttributeList)[positionOfSequence] += increaseBy;
   // create sequence at the end
   (*partialAttributeList)[lenghtOforiginalList + 1] = 0x30;
   (*partialAttributeList)[lenghtOforiginalList + 2] = increaseBy - 2;
@@ -211,7 +224,6 @@ int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
 
 int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
 
-
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
   char envelope[30];
   // sequence
@@ -261,6 +273,30 @@ int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
 int sendSearchResultEntry() {
   // TODO:
   return 0;
+}
+
+int addLDAPDN(unsigned char **searchRequest, unsigned char *LDAPDN,
+              int LDAPDNLength) {
+
+  int increaseTo = LDAPDNLength + (*searchRequest)[1] +2;
+  unsigned char *newsearchRequest =
+      (unsigned char *)realloc((*searchRequest), increaseTo);
+  // error checking
+  if (newsearchRequest == NULL) {
+    return -1;
+  }
+  (*searchRequest) = newsearchRequest;
+
+  (*searchRequest)[1] += LDAPDNLength;
+  int messageIDlenght = (*searchRequest)[3];
+
+  (*searchRequest)[6 + messageIDlenght] += LDAPDNLength;
+  (*searchRequest)[8 + messageIDlenght] = LDAPDNLength;
+
+  // copy ldapdn to search request
+  for (int i = 0; i < LDAPDNLength; i++) {
+    (*searchRequest)[9 + messageIDlenght + i] = LDAPDN[i];
+  }
 }
 
 int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
@@ -334,8 +370,14 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
     skipLength += 2 + atrributeLength;
   }
 
+
+  unsigned char testVal[] = "cn";
+  unsigned char testVal2[] = "test";
+   unsigned char testVal3[] = "test3";
+    unsigned char testVal4[] = "cgn";
+
   unsigned char *searchResultEntry;
-  InitSearchResultEntry(&searchResultEntry, sr.messageID);
+  InitSearchResultEntry(&searchResultEntry, sr.messageID, testVal3, 5);
 
   // print searchResultEntry hex values
   printf("searchResultEntry: ");
@@ -344,13 +386,14 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   }
   printf("\n");
 
-  unsigned char testVal[] = "cn";
-  unsigned char testVal2[] = "test";
 
   AddToSearchResultEntry(&searchResultEntry, testVal, 2, testVal2, 4);
+  AddToSearchResultEntry(&searchResultEntry, testVal4, 3, testVal3, 5);
+
 
   send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
   send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
+
   sendSearchResultDone(searchRequest, comm_socket);
 
   // print searchResultEntry hex values
@@ -408,7 +451,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(11052);
+  sa.sin6_port = htons(11068);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);
