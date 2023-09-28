@@ -451,7 +451,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(11068);
+  sa.sin6_port = htons(11070);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);
@@ -463,11 +463,12 @@ int main(int argc, const char *argv[]) {
 
   signal(SIGCHLD, SigCatcher);
 
-  while (1) {
+  //while (1)  TODO: reactivate forking
+  {
     int comm_socket =
         accept(welcome_socket, (struct sockaddr *)&sa_client, &sa_client_len);
-    if (comm_socket <= 0)
-      continue;
+    //if (comm_socket <= 0)  TODO: reactivate forking
+    // continue;  TODO: reactivate forking
 
     int pid = fork();
     if (pid < 0) {
