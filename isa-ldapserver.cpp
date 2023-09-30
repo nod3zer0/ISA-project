@@ -17,6 +17,28 @@ typedef struct searchedAttributes {
   bool email;
 } searchedAttributesType;
 
+
+//constants
+const unsigned int BER_BIND_REQUEST_C = 0x60;
+const unsigned int BER_BIND_RESPONSE_C = 0x61;
+const unsigned int BER_SEARCH_REQUEST_C = 0x63;
+const unsigned int BER_SEARCH_RESULT_ENTRY_C = 0x64;
+const unsigned int BER_SEARCH_RESULT_DONE_C = 0x65;
+const unsigned int BER_UNBIND_REQUEST_C = 0x42;
+
+const unsigned int BER_INT_C = 0x02;
+const unsigned int BER_OCTET_STRING_C = 0x04;
+const unsigned int BER_ENUM_C = 0x0A;
+const unsigned int BER_SEQUENCE_C = 0x30;
+const unsigned int BER_SET_C = 0x31;
+
+//constants --- result codes
+
+const unsigned int BER_LDAP_SUCCESS = 0x00;
+
+
+
+
 // enum for attributes (cn, email, uid)
 typedef enum { cn, email, uid } atributeDescriptions;
 
@@ -124,11 +146,11 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   // increase length of sequence at the end of partialAttributeList
   (*partialAttributeList)[positionOfSequence] += increaseBy;
   // create sequence at the end
-  (*partialAttributeList)[lenghtOforiginalList + 1] = 0x30;
+  (*partialAttributeList)[lenghtOforiginalList + 1] = BER_SEQUENCE_C;
   (*partialAttributeList)[lenghtOforiginalList + 2] = increaseBy - 2;
 
   // add attribute description
-  (*partialAttributeList)[lenghtOforiginalList + 3] = 0x04; // octet string
+  (*partialAttributeList)[lenghtOforiginalList + 3] = BER_OCTET_STRING_C; // octet string
   (*partialAttributeList)[lenghtOforiginalList + 4] =
       attributeDescriptionLength; // length of string
   for (int i = 0; i < attributeDescriptionLength; i++) {
@@ -137,13 +159,13 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   }
 
   (*partialAttributeList)[lenghtOforiginalList + 5 +
-                          attributeDescriptionLength] = 0x31; // set A0
+                          attributeDescriptionLength] = BER_SET_C; // set A0
   (*partialAttributeList)[lenghtOforiginalList + 6 +
                           attributeDescriptionLength] =
       attributeValueLength + 2; // length of sequence
   // add attribute value
   (*partialAttributeList)[lenghtOforiginalList + 7 +
-                          attributeDescriptionLength] = 0x04; // octet string
+                          attributeDescriptionLength] = BER_OCTET_STRING_C; // octet string
   (*partialAttributeList)[lenghtOforiginalList + 8 +
                           attributeDescriptionLength] =
       attributeValueLength; // length of string
@@ -163,10 +185,10 @@ int CreateBindResponse(unsigned char *bindRequest,
                        unsigned char *bindResponse) {
   // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
   // sequence
-  bindResponse[0] = 0x30;
+  bindResponse[0] = BER_SEQUENCE_C;
   bindResponse[1] = 0x0c; // length of sequence
   // message ID
-  bindResponse[2] = 0x02;
+  bindResponse[2] = BER_INT_C;
   bindResponse[3] = bindRequest[3]; // length of message ID
   bindResponse[4] = bindRequest[4]; // message ID
 
@@ -182,17 +204,17 @@ int CreateBindResponse(unsigned char *bindRequest,
   //_____________________________________________________________________________________________
 
   // bind response
-  bindResponse[5 + x] = 0x61; // BindResponse tag
+  bindResponse[5 + x] = BER_BIND_REQUEST_C; // BindResponse tag
   bindResponse[6 + x] = 0x07; // length of bind response
   // LDAP result
-  bindResponse[7 + x] = 0x0A; // enum
+  bindResponse[7 + x] = BER_ENUM_C; // enum
   bindResponse[8 + x] = 0x01; // length of enum
-  bindResponse[9 + x] = 0x00; // LDAP result code - success (0)
+  bindResponse[9 + x] = BER_LDAP_SUCCESS; // LDAP result code - success (0)
   // matched DN
-  bindResponse[10 + x] = 0x04; // octet string
+  bindResponse[10 + x] = BER_OCTET_STRING_C; // octet string
   bindResponse[11 + x] = 0x00; // length of matched DN
   // diagnostic message
-  bindResponse[12 + x] = 0x04; // octet string
+  bindResponse[12 + x] = BER_OCTET_STRING_C; // octet string
   bindResponse[13 + x] = 0x00; // length of diagnostic message
   return 14 + x;
 }
@@ -202,7 +224,7 @@ int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
   // 30 07 02 01 01 64 02 04 00
   char envelope[30];
   // sequence
-  envelope[0] = 0x30;
+  envelope[0] = BER_SEQUENCE_C;
   envelope[1] = 0x07; // length of sequence
   // message ID
   envelope[2] = 0x02;             // todo support bigger message ID
@@ -227,7 +249,7 @@ int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
   char envelope[30];
   // sequence
-  envelope[0] = 0x30;
+  envelope[0] = BER_SEQUENCE_C;
   envelope[1] = 0x0c; // length of sequence
   // message ID
   envelope[2] = 0x02;             // todo support bigger message ID
@@ -247,16 +269,16 @@ int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
 
   // 30 0e 02 01 02 65 09 30 07 0a 01 00 04 00 04 00
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
-  //  bind response
-  envelope[5 + x] = 0x65;
+
+  envelope[5 + x] = BER_SEARCH_RESULT_DONE_C;
   envelope[6 + x] = 0x07;
 
-  envelope[7 + x] = 0x0a;
+  envelope[7 + x] = BER_ENUM_C;
   envelope[8 + x] = 0x01;
-  envelope[9 + x] = 0x00;
-  envelope[10 + x] = 0x04;
+  envelope[9 + x] = BER_LDAP_SUCCESS;
+  envelope[10 + x] = BER_OCTET_STRING_C;
   envelope[11 + x] = 0x00;
-  envelope[12 + x] = 0x04;
+  envelope[12 + x] = BER_OCTET_STRING_C;
   envelope[13 + x] = 0x00;
 
   // print envelope hex values
