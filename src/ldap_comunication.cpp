@@ -2,9 +2,8 @@
 /// @brief Inicializes and alocates partial empty attribute list
 /// @param partialAttributeList pointer to empty attribute list
 /// @return 0 if success, -1 if error
-int InitSearchResultEntry(unsigned char **partialAttributeList,
-                          char *messageID, unsigned char *LDAPDN,
-              int LDAPDNLength) {
+int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
+                          unsigned char *LDAPDN, int LDAPDNLength) {
   // 64 04 04 00 30 00
 
   (*partialAttributeList) = (unsigned char *)malloc(11 + messageID[1]);
@@ -32,19 +31,21 @@ int InitSearchResultEntry(unsigned char **partialAttributeList,
     return -1;
   }
 
-  (*partialAttributeList)[5 + x] = BER_SEARCH_RESULT_ENTRY_C; // Aplication 4 tag
-  (*partialAttributeList)[6 + x] = 0x04 + LDAPDNLength; // length of PartialAttributeList
+  (*partialAttributeList)[5 + x] =
+      BER_SEARCH_RESULT_ENTRY_C; // Aplication 4 tag
+  (*partialAttributeList)[6 + x] =
+      0x04 + LDAPDNLength; // length of PartialAttributeList
   // LDAPN
-  (*partialAttributeList)[7 + x] = 0x04; // octet string
+  (*partialAttributeList)[7 + x] = 0x04;         // octet string
   (*partialAttributeList)[8 + x] = LDAPDNLength; // length of string
 
   int i = 0;
-    for (; i < LDAPDNLength; i++) {
-        (*partialAttributeList)[9 + x + i] = LDAPDN[i];
-    }
+  for (; i < LDAPDNLength; i++) {
+    (*partialAttributeList)[9 + x + i] = LDAPDN[i];
+  }
 
   // sequence
-  (*partialAttributeList)[9 + x +i] = 0x30;
+  (*partialAttributeList)[9 + x + i] = 0x30;
   (*partialAttributeList)[10 + x + i] = 0x00; // length of sequence
   // TODO
   return 0;
@@ -57,8 +58,9 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
                            int attributeValueLength) {
 
   int increaseBy = 8 + attributeValueLength + attributeDescriptionLength;
-  unsigned char *newPartialAttributeList =
-      (unsigned char *)realloc((*partialAttributeList), increaseBy + (*partialAttributeList)[1] +2); //todo: support longform
+  unsigned char *newPartialAttributeList = (unsigned char *)realloc(
+      (*partialAttributeList),
+      increaseBy + (*partialAttributeList)[1] + 2); // todo: support longform
   // error checking
   if (newPartialAttributeList == NULL) {
     return -1;
@@ -66,10 +68,8 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   (*partialAttributeList) = newPartialAttributeList;
 
   int positionOfSequence = 2 + (*partialAttributeList)[3] + 2;
-  positionOfSequence += (*partialAttributeList)[positionOfSequence + 3] + 2 +2 +1;
-
-
-
+  positionOfSequence +=
+      (*partialAttributeList)[positionOfSequence + 3] + 2 + 2 + 1;
 
   int lenghtOforiginalList =
       (*partialAttributeList)[1] + 1; // TODO: support ints
@@ -83,7 +83,8 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   (*partialAttributeList)[lenghtOforiginalList + 2] = increaseBy - 2;
 
   // add attribute description
-  (*partialAttributeList)[lenghtOforiginalList + 3] = BER_OCTET_STRING_C; // octet string
+  (*partialAttributeList)[lenghtOforiginalList + 3] =
+      BER_OCTET_STRING_C; // octet string
   (*partialAttributeList)[lenghtOforiginalList + 4] =
       attributeDescriptionLength; // length of string
   for (int i = 0; i < attributeDescriptionLength; i++) {
@@ -98,7 +99,8 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
       attributeValueLength + 2; // length of sequence
   // add attribute value
   (*partialAttributeList)[lenghtOforiginalList + 7 +
-                          attributeDescriptionLength] = BER_OCTET_STRING_C; // octet string
+                          attributeDescriptionLength] =
+      BER_OCTET_STRING_C; // octet string
   (*partialAttributeList)[lenghtOforiginalList + 8 +
                           attributeDescriptionLength] =
       attributeValueLength; // length of string
@@ -138,17 +140,17 @@ int CreateBindResponse(unsigned char *bindRequest,
 
   // bind response
   bindResponse[5 + x] = BER_BIND_REQUEST_C; // BindResponse tag
-  bindResponse[6 + x] = 0x07; // length of bind response
+  bindResponse[6 + x] = 0x07;               // length of bind response
   // LDAP result
-  bindResponse[7 + x] = BER_ENUM_C; // enum
-  bindResponse[8 + x] = 0x01; // length of enum
+  bindResponse[7 + x] = BER_ENUM_C;       // enum
+  bindResponse[8 + x] = 0x01;             // length of enum
   bindResponse[9 + x] = BER_LDAP_SUCCESS; // LDAP result code - success (0)
   // matched DN
   bindResponse[10 + x] = BER_OCTET_STRING_C; // octet string
-  bindResponse[11 + x] = 0x00; // length of matched DN
+  bindResponse[11 + x] = 0x00;               // length of matched DN
   // diagnostic message
   bindResponse[12 + x] = BER_OCTET_STRING_C; // octet string
-  bindResponse[13 + x] = 0x00; // length of diagnostic message
+  bindResponse[13 + x] = 0x00;               // length of diagnostic message
   return 14 + x;
 }
 
@@ -233,7 +235,7 @@ int sendSearchResultEntry() {
 int addLDAPDN(unsigned char **searchRequest, unsigned char *LDAPDN,
               int LDAPDNLength) {
 
-  int increaseTo = LDAPDNLength + (*searchRequest)[1] +2;
+  int increaseTo = LDAPDNLength + (*searchRequest)[1] + 2;
   unsigned char *newsearchRequest =
       (unsigned char *)realloc((*searchRequest), increaseTo);
   // error checking
@@ -325,11 +327,10 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
     skipLength += 2 + atrributeLength;
   }
 
-
   unsigned char testVal[] = "cn";
   unsigned char testVal2[] = "test";
-   unsigned char testVal3[] = "test3";
-    unsigned char testVal4[] = "cgn";
+  unsigned char testVal3[] = "test3";
+  unsigned char testVal4[] = "cgn";
 
   unsigned char *searchResultEntry;
   InitSearchResultEntry(&searchResultEntry, sr.messageID, testVal3, 5);
@@ -341,10 +342,8 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   }
   printf("\n");
 
-
   AddToSearchResultEntry(&searchResultEntry, testVal, 2, testVal2, 4);
   AddToSearchResultEntry(&searchResultEntry, testVal4, 3, testVal3, 5);
-
 
   send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
   send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
