@@ -1,5 +1,6 @@
 #include "inc/ber_helper_functions.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int GetNumberOfBytesNeddedForINT(int value) {
   if (value < 0) {
@@ -118,8 +119,6 @@ int writeInt(unsigned char *s, int value, int *length) {
   return 0;
 }
 
-
-
 /**
  * @brief gets number of bytes that takes to necode length of data in BER
  * @param start start of the length in char array
@@ -195,6 +194,20 @@ unsigned char *skipTags(unsigned char *start, int n, int *err) { // TODO: test
     i++;
   }
   return start + jumpLength - 1; // -1 to get index of tag instead of length
+}
+
+/**
+ * @brief Increase lenght of BER encoded data by n
+ * @param start start of the length in char array
+ * @param array whole envelope
+ * @param n number of bytes to increase
+ */
+void IncreaseLength4Bytes(unsigned char *start, int n, int *err) {
+    int length = ParseLength(start, err) + n;
+    start[1] = length >> 24;
+    start[2] = length >> 16;
+    start[3] = length >> 8;
+    start[4] = length;
 }
 
 /**

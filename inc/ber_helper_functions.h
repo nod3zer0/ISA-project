@@ -23,3 +23,5 @@ int getLengthLength(unsigned char *start, int *err);
 unsigned char *skipTags(unsigned char *start, int n, int *err);
 
 unsigned char *goIntoTag(unsigned char *start, int *err);
+
+void IncreaseLength4Bytes(unsigned char *start, int n, int *err);
