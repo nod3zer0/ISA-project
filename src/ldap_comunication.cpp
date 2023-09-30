@@ -8,10 +8,10 @@ int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
 
   (*partialAttributeList) = (unsigned char *)malloc(11 + messageID[1]);
 
-  (*partialAttributeList)[0] = 0x30;
+  (*partialAttributeList)[0] = BER_SEQUENCE_C;
   (*partialAttributeList)[1] = 0x09 + LDAPDNLength; // length of sequence
   // message ID
-  (*partialAttributeList)[2] = 0x02;
+  (*partialAttributeList)[2] = BER_INT_C;
   (*partialAttributeList)[3] = messageID[1]; // length of message ID
   (*partialAttributeList)[4] = messageID[0]; // message ID
   // copies messageID to bind response
@@ -36,7 +36,7 @@ int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
   (*partialAttributeList)[6 + x] =
       0x04 + LDAPDNLength; // length of PartialAttributeList
   // LDAPN
-  (*partialAttributeList)[7 + x] = 0x04;         // octet string
+  (*partialAttributeList)[7 + x] = BER_OCTET_STRING_C;       // octet string
   (*partialAttributeList)[8 + x] = LDAPDNLength; // length of string
 
   int i = 0;
@@ -45,7 +45,7 @@ int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
   }
 
   // sequence
-  (*partialAttributeList)[9 + x + i] = 0x30;
+  (*partialAttributeList)[9 + x + i] = BER_SEQUENCE_C;
   (*partialAttributeList)[10 + x + i] = 0x00; // length of sequence
   // TODO
   return 0;
@@ -66,6 +66,18 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
     return -1;
   }
   (*partialAttributeList) = newPartialAttributeList;
+
+// Sequence
+//      string messageID
+//      application 4 (searchResultEntry)
+//          string LDAPDN
+//          sequence partialAttributeList
+//              sequence
+//                  string attributeDescription
+//                  set
+//                      string attributeValue
+
+
 
   int positionOfSequence = 2 + (*partialAttributeList)[3] + 2;
   positionOfSequence +=

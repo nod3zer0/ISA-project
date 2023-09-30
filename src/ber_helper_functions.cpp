@@ -1,42 +1,74 @@
 #include "inc/ber_helper_functions.h"
 #include <stdio.h>
 
+int GetNumberOfBytesNeddedForINT(int value) {
+  if (value < 0) {
+    return -1;
+  }
+  if (value < 0x100) {
+    return 1 + 2;
+  } else if (value < 0x10000) {
+    return 2 + 2;
+  } else if (value < 0x1000000) {
+    return 3 + 2;
+  } else if (value < 0x100000000) {
+    return 4 + 2;
+  }
+  return -1;
+}
+
 /**
  * @brief parses 1 integer from ldap coded message
  *
  * @param s start of the integer in char array
  * @return int - parsed integer
  */
-int ParseINT(unsigned char *s, int *err) {
+int ParseINT(unsigned char *s, int *err, int *length) {
   int value = 0;
   if (s[1] > 4) {
     return 0;
-    *err = 2;
+    (*err) = 2;
   }
 
-  switch (s[1]) {
+  int dataLength = ParseLength(s + 1, err);
+  if (*err != 0) {
+    (*err) = 1;
+    return 0;
+  }
+  int lengthLength = getLengthLength(s + 1, err);
+  if (*err != 0) {
+    (*err) = 1;
+    return 0;
+  }
+
+  (*length) = dataLength + 1 + lengthLength;
+
+  switch (dataLength) {
   case 0x00:
     value = 0;
-    *err = 1;
+    (*err) = 1;
     break;
   case 0x01:
-    value = s[2];
-    err = 0;
+    value = s[1 + lengthLength];
+    (*err) = 0;
     break;
   case 0x02:
-    value = s[2] << 8 | s[3];
-    err = 0;
+    value = s[1 + lengthLength] << 8 | s[2 + lengthLength];
+    (*err) = 0;
     break;
   case 0x03:
-    value = s[2] << 16 | s[3] << 8 | s[4];
-    err = 0;
+    value = s[1 + lengthLength] << 16 | s[2 + lengthLength] << 8 |
+            s[3 + lengthLength];
+    (*err) = 0;
     break;
   case 0x04:
-    value = s[2] << 24 | s[3] << 16 | s[4] << 8 | s[5];
-    err = 0;
+    value = s[1 + lengthLength] << 24 | s[2 + lengthLength] << 16 |
+            s[3 + lengthLength] << 8 | s[4 + lengthLength];
+    (*err) = 0;
     break;
 
   default:
+    (*err) = 2;
     break;
   }
   return value;
@@ -47,9 +79,10 @@ int ParseINT(unsigned char *s, int *err) {
  *
  * @param s start of the string in char array
  * @param value int to be written
+ * @param length number of bytes written (including tag and length bytes)
  * @return -1 if error, 0 if success
  */
-int writeInt(unsigned char *s, int value) {
+int writeInt(unsigned char *s, int value, int *length) {
   if (value < 0) {
     return -1;
   }
@@ -57,17 +90,20 @@ int writeInt(unsigned char *s, int value) {
     s[0] = 0x02;
     s[1] = 0x01;
     s[2] = value;
+    (*length) = 1 + 2;
   } else if (value < 0x10000) {
     s[0] = 0x02;
     s[1] = 0x02;
     s[2] = value >> 8;
     s[3] = value;
+    (*length) = 2 + 2;
   } else if (value < 0x1000000) {
     s[0] = 0x02;
     s[1] = 0x03;
     s[2] = value >> 16;
     s[3] = value >> 8;
     s[4] = value;
+    (*length) = 3 + 2;
   } else if (value < 0x100000000) {
     s[0] = 0x02;
     s[1] = 0x04;
@@ -75,6 +111,7 @@ int writeInt(unsigned char *s, int value) {
     s[3] = value >> 16;
     s[4] = value >> 8;
     s[5] = value;
+    (*length) = 4 + 2;
   } else {
     return -1;
   }

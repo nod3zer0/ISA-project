@@ -1,4 +1,4 @@
-#include "inc/ber_helper_functions.h"
+// #include "inc/ber_helper_functions.h"
 #include "inc/ldap_comunication.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -19,36 +19,36 @@ void SigCatcher(int n) {
   printf("Child %d spawned.\n", pid);
 }
 
-// test main, TODO: remove
-int main(int argc, const char *argv[]) {
+// // test main, TODO: remove
+// int main(int argc, const char *argv[]) {
 //   //_________________TEST ParseLength_______________________
 //     // test parsing long form and short form from ber
-//     unsigned char bytes[4]{0x30, 0x82, 0x00, 0x05};
-//     int err = 0;
-//     int value = ParseLength((bytes + 1), &err);
-//     printf("value: %d\n", value);
+//     // unsigned char bytes[4]{0x30, 0x82, 0x00, 0x05};
+//     // int err = 0;
+//     // int value = ParseLength((bytes + 1), &err);
+//     // printf("value: %d\n", value);
 
-//     unsigned char bytes2[4] = {0x30, 0x82, 0x03, 0xFC};
-//     err = 0;
-//     value = ParseLength((bytes2 + 1), &err);
-//     printf("value: %d\n", value);
+//     // unsigned char bytes2[4] = {0x30, 0x82, 0x03, 0xFC};
+//     // err = 0;
+//     // value = ParseLength((bytes2 + 1), &err);
+//     // printf("value: %d\n", value);
 
-  // __________________TEST skipTags________________________
-  unsigned char bytes[17]{0x30, 0x0e, 0x02, 0x82, 0x00, 0x01, 0x01, 0x61, 0x07,
-                          0x0a, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
-  int err;
-  unsigned char *ptr = goIntoTag(bytes, &err);
-  printf("tag: %x\n", *((unsigned char *)ptr));
-  ptr = skipTags((unsigned char *)ptr, 1, &err);
-  printf("tag: %x\n", *((unsigned char *)ptr));
-  ptr = goIntoTag((unsigned char *)ptr, &err);
-  printf("tag: %x\n", *((unsigned char *)ptr));
-  ptr = skipTags((unsigned char *)ptr, 2, &err);
-  printf("tag: %x\n", *((unsigned char *)ptr));
+// //   // __________________TEST skipTags________________________
+// //   unsigned char bytes[17]{0x30, 0x0e, 0x02, 0x82, 0x00, 0x01, 0x01, 0x61, 0x07,
+// //                           0x0a, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
+// //   int err;
+// //   unsigned char *ptr = goIntoTag(bytes, &err);
+// //   printf("tag: %x\n", *((unsigned char *)ptr));
+// //   ptr = skipTags((unsigned char *)ptr, 1, &err);
+// //   printf("tag: %x\n", *((unsigned char *)ptr));
+// //   ptr = goIntoTag((unsigned char *)ptr, &err);
+// //   printf("tag: %x\n", *((unsigned char *)ptr));
+// //   ptr = skipTags((unsigned char *)ptr, 2, &err);
+// //   printf("tag: %x\n", *((unsigned char *)ptr));
 
-  // 0x30 0x0c 0x02 0x01 0x01 0x61 0x07 0x0a 0x01 0x00 0x04 0x00 0x04 0x00
-}
-/*
+//   // 0x30 0x0c 0x02 0x01 0x01 0x61 0x07 0x0a 0x01 0x00 0x04 0x00 0x04 0x00
+// }
+
 int main(int argc, const char *argv[]) {
   int rc;
   int welcome_socket;
@@ -261,4 +261,3 @@ int main(int argc, const char *argv[]) {
     }
   }
 }
-*/
