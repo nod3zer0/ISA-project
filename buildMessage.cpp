@@ -67,7 +67,7 @@ void CreateBindResponse(unsigned char *bindRequest,
   int x = 0;
   if (1 < bindRequest[3]) {
     x = 1;
-    for (;x < bindRequest[3]; x++) {
+    for (; x < bindRequest[3]; x++) {
       bindResponse[4 + x] = bindRequest[4 + x];
     }
   }
@@ -109,7 +109,6 @@ int GetLength(unsigned char *s) {
   return -1;
 }
 
-
 /**
  * @brief parses 1 integer from ldap coded message
  *
@@ -117,67 +116,121 @@ int GetLength(unsigned char *s) {
  * @return int - parsed integer
  */
 int ParseINT(unsigned char *s, int *err) {
-    int value = 0;
-    if(s[1] > 4){
-        return 0;
-        *err = 2;
-    }
+  int value = 0;
+  if (s[1] > 4) {
+    return 0;
+    *err = 2;
+  }
 
-    switch (s[1])
-    {
-    case 0x00:
-        value = 0;
-        *err = 1;
-        break;
-    case 0x01:
-        value = s[2];
-        err = 0;
-        break;
-    case 0x02:
-        value = s[2] << 8 | s[3];
-        err = 0;
-        break;
-    case 0x03:
-        value = s[2] << 16 | s[3] << 8 | s[4];
-        err = 0;
-        break;
-    case 0x04:
-        value = s[2] << 24 | s[3] << 16 | s[4] << 8 | s[5];
-        err = 0;
-        break;
+  switch (s[1]) {
+  case 0x00:
+    value = 0;
+    *err = 1;
+    break;
+  case 0x01:
+    value = s[2];
+    err = 0;
+    break;
+  case 0x02:
+    value = s[2] << 8 | s[3];
+    err = 0;
+    break;
+  case 0x03:
+    value = s[2] << 16 | s[3] << 8 | s[4];
+    err = 0;
+    break;
+  case 0x04:
+    value = s[2] << 24 | s[3] << 16 | s[4] << 8 | s[5];
+    err = 0;
+    break;
 
-    default:
-        break;
+  default:
+    break;
+  }
+  return value;
+}
+
+/**
+ * @brief writes int in BER LDAP format to char array
+ *
+ * @param s start of the string in char array
+ * @param value int to be written
+ * @return -1 if error, 0 if success
+ */
+int writeInt(unsigned char *s, int value) {
+    if (value < 0) {
+        return -1;
     }
-    return value;
+    if (value < 0x100) {
+        s[0] = 0x02;
+        s[1] = 0x01;
+        s[2] = value;
+    } else if (value < 0x10000) {
+        s[0] = 0x02;
+        s[1] = 0x02;
+        s[2] = value >> 8;
+        s[3] = value;
+    } else if (value < 0x1000000) {
+        s[0] = 0x02;
+        s[1] = 0x03;
+        s[2] = value >> 16;
+        s[3] = value >> 8;
+        s[4] = value;
+    } else if (value < 0x100000000) {
+        s[0] = 0x02;
+        s[1] = 0x04;
+        s[2] = value >> 24;
+        s[3] = value >> 16;
+        s[4] = value >> 8;
+        s[5] = value;
+    } else {
+        return -1;
+    }
+    return 0;
 }
 
 int main(int argc, const char *argv[]) {
 
+  int err = 0;
 
-    int err = 0;
+  unsigned char bytes[6]{0x02, 0x12, 0x12, 0x34, 0x56, 0x78};
+  printf("%d\n", ParseINT(bytes, &err));
+  bytes[1] = 0x04;
+  printf("controll: %d\n", 0x12345678);
+  printf("%d\n", ParseINT(bytes, &err));
+  bytes[1] = 0x03;
+  printf("controll: %d\n", 0x123456);
+  printf("%d\n", ParseINT(bytes, &err));
+  bytes[1] = 0x02;
+  printf("controll: %d\n", 0x1234);
+  printf("%d\n", ParseINT(bytes, &err));
+  bytes[1] = 0x01;
+  printf("controll: %d\n", 0x12);
+  printf("%d\n", ParseINT(bytes, &err));
+  bytes[1] = 0x00;
+  printf("%d\n", ParseINT(bytes, &err));
 
-    unsigned char bytes[6]{0x02, 0x12, 0x12, 0x34, 0x56, 0x78};
-    printf("%d\n", ParseINT(bytes, &err));
-    bytes[1] = 0x04;
-    printf("controll: %d\n",0x12345678);
-    printf("%d\n", ParseINT(bytes, &err));
-    bytes[1] = 0x03;
-    printf("controll: %d\n",0x123456);
-    printf("%d\n", ParseINT(bytes, &err));
-    bytes[1] = 0x02;
-    printf("controll: %d\n",0x1234);
-    printf("%d\n", ParseINT(bytes, &err));
-    bytes[1] = 0x01;
-    printf("controll: %d\n",0x12);
-    printf("%d\n", ParseINT(bytes, &err));
-    bytes[1] = 0x00;
-    printf("%d\n", ParseINT(bytes, &err));
+  // test writeInt
 
+  unsigned char bytes2[6];
+  writeInt(bytes2, 0x12);
+  printf("%x\n", ParseINT(bytes2, &err));
+  writeInt(bytes2, 0x1234);
+  printf("%x\n", ParseINT(bytes2, &err));
+  writeInt(bytes2, 0x123456);
+  printf("%x\n", ParseINT(bytes2, &err));
+  writeInt(bytes2, 0x12345678);
+  printf("%x\n", ParseINT(bytes2, &err));
 
+  for(int i = 0; i< __INT32_MAX__; i++){
+      writeInt(bytes2, i);
+     // printf("%x\n", ParseINT(bytes2, &err));
+     if(i != ParseINT(bytes2, &err)){
+            printf("error: %d\n", i);
+     }
+  }
 
-
-  //unsigned char bytes[4]{0x02, 0x02, 0x12, 0x34};
+  // unsigned char bytes[4]{0x02, 0x02, 0x12, 0x34};
   printf("%lld", ConvertINT(bytes));
 
   // unsigned char bytes[4]{ 0xdd, 0xcc, 0xbb, 0xaa };
