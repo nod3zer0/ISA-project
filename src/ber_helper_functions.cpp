@@ -118,6 +118,8 @@ int writeInt(unsigned char *s, int value, int *length) {
   return 0;
 }
 
+
+
 /**
  * @brief gets number of bytes that takes to necode length of data in BER
  * @param start start of the length in char array

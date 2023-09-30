@@ -5,7 +5,7 @@
 int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
                           unsigned char *LDAPDN, int LDAPDNLength) {
   // 64 04 04 00 30 00
-
+  // all tags + all lengths = 11
   (*partialAttributeList) = (unsigned char *)malloc(11 + messageID[1]);
 
   (*partialAttributeList)[0] = BER_SEQUENCE_C;
@@ -36,8 +36,8 @@ int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
   (*partialAttributeList)[6 + x] =
       0x04 + LDAPDNLength; // length of PartialAttributeList
   // LDAPN
-  (*partialAttributeList)[7 + x] = BER_OCTET_STRING_C;       // octet string
-  (*partialAttributeList)[8 + x] = LDAPDNLength; // length of string
+  (*partialAttributeList)[7 + x] = BER_OCTET_STRING_C; // octet string
+  (*partialAttributeList)[8 + x] = LDAPDNLength;       // length of string
 
   int i = 0;
   for (; i < LDAPDNLength; i++) {
@@ -56,69 +56,84 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
                            int attributeDescriptionLength,
                            unsigned char *attributeValue,
                            int attributeValueLength) {
-
-  int increaseBy = 8 + attributeValueLength + attributeDescriptionLength;
+  int err = 0;
+  int numberOfNewTags = 4;
+  int numberOfNewLengths = 4;
+  int increaseBy = numberOfNewTags + numberOfNewLengths + attributeValueLength +
+                   attributeDescriptionLength;
   unsigned char *newPartialAttributeList = (unsigned char *)realloc(
       (*partialAttributeList),
-      increaseBy + (*partialAttributeList)[1] + 2); // todo: support longform
+      increaseBy + ParseLength((*partialAttributeList) + 1, &err) +
+          2); // todo: support longform
   // error checking
   if (newPartialAttributeList == NULL) {
     return -1;
   }
   (*partialAttributeList) = newPartialAttributeList;
 
-// Sequence
-//      string messageID
-//      application 4 (searchResultEntry)
-//          string LDAPDN
-//          sequence partialAttributeList
-//              sequence
-//                  string attributeDescription
-//                  set
-//                      string attributeValue
+  // Sequence
+  //      string messageID
+  //      application 4 (searchResultEntry)
+  //          string LDAPDN
+  //          sequence partialAttributeList
+  //              sequence
+  //                  string attributeDescription
+  //                  set
+  //                      string attributeValue
 
-
-
-  int positionOfSequence = 2 + (*partialAttributeList)[3] + 2;
-  positionOfSequence +=
-      (*partialAttributeList)[positionOfSequence + 3] + 2 + 2 + 1;
-
-  int lenghtOforiginalList =
-      (*partialAttributeList)[1] + 1; // TODO: support ints
+  if ((*partialAttributeList)[1] + increaseBy >
+      0x7F) { // TODO: implement longform increase
+    printf("increaseBy too big, not implemented!\n");
+  }
   (*partialAttributeList)[1] += increaseBy;
-  (*partialAttributeList)[6] += increaseBy; // TODO support longform
 
-  // increase length of sequence at the end of partialAttributeList
-  (*partialAttributeList)[positionOfSequence] += increaseBy;
+  unsigned char *locationOfSequence =
+      goIntoTag((*partialAttributeList), &err); // go into sequence
+  if (err != 0)
+    return -1;
+  locationOfSequence =
+      skipTags(locationOfSequence, 1, &err); // skip string messageID
+  if (err != 0)
+    return -1;
+  *(locationOfSequence + 1) += increaseBy; // TODO: longform
+  locationOfSequence =
+      goIntoTag(locationOfSequence, &err); // go into application 4
+  if (err != 0)
+    return -1;
+  locationOfSequence =
+      skipTags(locationOfSequence, 1, &err); // skip string LDAPDN
+  unsigned char *locationOfPartialAttributeList = locationOfSequence;
+  if (err != 0)
+    return -1;
+  locationOfSequence = skipTags(
+      locationOfSequence, 1, &err); // skip to the end of partialAttributeList
+  if (err != 0)
+    return -1;
+
+  *(locationOfPartialAttributeList + 1) += increaseBy; // TODO: longform
+
   // create sequence at the end
-  (*partialAttributeList)[lenghtOforiginalList + 1] = BER_SEQUENCE_C;
-  (*partialAttributeList)[lenghtOforiginalList + 2] = increaseBy - 2;
+  (locationOfSequence)[0] = BER_SEQUENCE_C;
+  (locationOfSequence)[1] = increaseBy - 2;
 
   // add attribute description
-  (*partialAttributeList)[lenghtOforiginalList + 3] =
-      BER_OCTET_STRING_C; // octet string
-  (*partialAttributeList)[lenghtOforiginalList + 4] =
-      attributeDescriptionLength; // length of string
+  (locationOfSequence)[2] = BER_OCTET_STRING_C;         // octet string
+  (locationOfSequence)[3] = attributeDescriptionLength; // length of string
   for (int i = 0; i < attributeDescriptionLength; i++) {
-    (*partialAttributeList)[lenghtOforiginalList + 5 + i] =
-        attributeDescription[i];
+    (locationOfSequence)[4 + i] = attributeDescription[i];
   }
 
-  (*partialAttributeList)[lenghtOforiginalList + 5 +
-                          attributeDescriptionLength] = BER_SET_C; // set A0
-  (*partialAttributeList)[lenghtOforiginalList + 6 +
-                          attributeDescriptionLength] =
+  (locationOfSequence)[4 + attributeDescriptionLength] = BER_SET_C; // set A0
+  (locationOfSequence)[5 + attributeDescriptionLength] =
       attributeValueLength + 2; // length of sequence
   // add attribute value
-  (*partialAttributeList)[lenghtOforiginalList + 7 +
-                          attributeDescriptionLength] =
+  (locationOfSequence)[6 + attributeDescriptionLength] =
       BER_OCTET_STRING_C; // octet string
-  (*partialAttributeList)[lenghtOforiginalList + 8 +
-                          attributeDescriptionLength] =
+  (locationOfSequence)[7 + attributeDescriptionLength] =
       attributeValueLength; // length of string
   for (int i = 0; i < attributeValueLength; i++) {
-    (*partialAttributeList)[lenghtOforiginalList + 9 +
-                            attributeDescriptionLength + i] = attributeValue[i];
+    (locationOfSequence)[8 + attributeDescriptionLength + i] =
+        attributeValue[i];
   }
 
   return 0;

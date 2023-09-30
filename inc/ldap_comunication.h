@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "inc/ber_constants.h"
+#include "inc/ber_helper_functions.h"
 
 
 typedef struct searchedAttributes {
