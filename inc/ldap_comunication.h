@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "inc/ber_constants.h"
 #include "inc/ber_helper_functions.h"
+#include <vector>
 
 
 typedef struct searchedAttributes {
@@ -58,10 +59,10 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
                            int attributeDescriptionLength,
                            unsigned char *attributeValue,
                            int attributeValueLength);
-int CreateBindResponse(unsigned char *bindRequest, unsigned char *bindResponse);
+int CreateBindResponse(std::vector<unsigned char>& bindRequest, std::vector<unsigned char>& bindResponse);
 
 int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
 
-int searchRequestHandler(unsigned char *searchRequest, int comm_socket);
+int searchRequestHandler(std::vector<unsigned char>& searchRequest, int comm_socket);
 
-int loadEnvelope(unsigned char *bindRequest, int comm_socket);
+int loadEnvelope(std::vector<unsigned char>& bindRequest, int comm_socket);

@@ -10,6 +10,7 @@ int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
 
   (*partialAttributeList)[0] = BER_SEQUENCE_C;
   (*partialAttributeList)[1] = 0x09 + LDAPDNLength; // length of sequence
+
   // message ID
   (*partialAttributeList)[2] = BER_INT_C;
   (*partialAttributeList)[3] = messageID[1]; // length of message ID
@@ -143,42 +144,39 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
 /// @param bindRequest
 /// @param bindResponse
 /// @return length of bind response, -1 if error
-int CreateBindResponse(unsigned char *bindRequest,
-                       unsigned char *bindResponse) {
+int CreateBindResponse(std::vector<unsigned char> &bindRequest,
+                       std::vector<unsigned char> &bindResponse) {
   // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
   // sequence
-  bindResponse[0] = BER_SEQUENCE_C;
-  bindResponse[1] = 0x0c; // length of sequence
+  bindResponse.push_back(BER_SEQUENCE_C);
+  bindResponse.push_back(0x0c); // length of sequence
   // message ID
-  bindResponse[2] = BER_INT_C;
-  bindResponse[3] = bindRequest[3]; // length of message ID
-  bindResponse[4] = bindRequest[4]; // message ID
+  bindResponse.push_back(BER_INT_C);
+  bindResponse.push_back(bindRequest[3]); // length of message ID
+  // bindResponse.push_back(bindRequest[4]);// message ID
 
   // copies messageID to bind response
   // _____________________________________________________________
-  int x = 0;
-  if (1 < bindRequest[3]) {
-    x = 1;
-    for (; x < bindRequest[3]; x++) {
-      bindResponse[4 + x] = bindRequest[4 + x];
-    }
-  } // extends length of sequence by length of message ID
+
+  bindResponse.push_back(bindRequest[4]); //TODO: support longform
+
+  // extends length of sequence by length of message ID
   //_____________________________________________________________________________________________
 
   // bind response
-  bindResponse[5 + x] = BER_BIND_REQUEST_C; // BindResponse tag
-  bindResponse[6 + x] = 0x07;               // length of bind response
+  bindResponse.push_back(BER_BIND_RESPONSE_C); // BindResponse tag
+  bindResponse.push_back(0x07);               // length of bind response
   // LDAP result
-  bindResponse[7 + x] = BER_ENUM_C;       // enum
-  bindResponse[8 + x] = 0x01;             // length of enum
-  bindResponse[9 + x] = BER_LDAP_SUCCESS; // LDAP result code - success (0)
+  bindResponse.push_back(BER_ENUM_C);       // enum
+  bindResponse.push_back(0x01);             // length of enum
+  bindResponse.push_back(BER_LDAP_SUCCESS); // LDAP result code - success (0)
   // matched DN
-  bindResponse[10 + x] = BER_OCTET_STRING_C; // octet string
-  bindResponse[11 + x] = 0x00;               // length of matched DN
+  bindResponse.push_back(BER_OCTET_STRING_C); // octet string
+  bindResponse.push_back(0x00);               // length of matched DN
   // diagnostic message
-  bindResponse[12 + x] = BER_OCTET_STRING_C; // octet string
-  bindResponse[13 + x] = 0x00;               // length of diagnostic message
-  return 14 + x;
+  bindResponse.push_back(BER_OCTET_STRING_C); // octet string
+  bindResponse.push_back(0x00);               // length of diagnostic message
+  return bindResponse.size();
 }
 
 int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
@@ -206,7 +204,8 @@ int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
   return 0;
 }
 
-int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
+int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
+                         int comm_socket) {
 
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
   char envelope[30];
@@ -254,11 +253,6 @@ int sendSearchResultDone(unsigned char *searchRequest, int comm_socket) {
   return 1;
 }
 
-int sendSearchResultEntry() {
-  // TODO:
-  return 0;
-}
-
 int addLDAPDN(unsigned char **searchRequest, unsigned char *LDAPDN,
               int LDAPDNLength) {
 
@@ -283,7 +277,36 @@ int addLDAPDN(unsigned char **searchRequest, unsigned char *LDAPDN,
   }
 }
 
-int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
+int filterHandler(unsigned char *filter, int comm_socket) {
+  int err = 0;
+  switch (getFilterType(filter)) {
+  case equalityMatch:
+    // TODO
+    break;
+  case substrings:
+    // TODO
+    break;
+  case AND:
+    // TODO
+    break;
+  case OR:
+    // TODO
+    break;
+  case NOT:
+    // TODO
+    break;
+  default:
+    break;
+  }
+  return 0;
+}
+
+bool equalityMatchHSolver(unsigned char *filter) {}
+
+bool andSolver(unsigned char *filter) {}
+
+int searchRequestHandler(std::vector<unsigned char> &searchRequest,
+                         int comm_socket) {
   // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17
   // 30 42 02 01 02 63 3d 04 00 0a 01 02 0a 01 00 02 01 00 02 01 00 01 01 00 a0
   // 20  a3 0d 04 03 75 69 64 04 06 72 69 65 6d 61 6e a3 0f 04 03 75 69 64 04 08
@@ -313,7 +336,12 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   // set message ID
   sr.messageIDLength = searchRequest[skipLength + 1];
   sr.messageID = (char *)malloc(sr.messageIDLength);
-  memcpy(sr.messageID, searchRequest + skipLength, sr.messageIDLength + 2);
+  // memcpy(sr.messageID, &searchRequest[0] + skipLength, sr.messageIDLength +
+  // 2);
+  for (int i = 0; i < sr.messageIDLength + 2; i++) {
+    sr.messageID[i] = searchRequest[2 + i];
+  }
+
   // ---------------------------------------------
   skipLength += searchRequest[skipLength + 1] + 2; // skip message ID
   skipLength += 2;                                 // go behind application 3
@@ -326,6 +354,9 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   skipLength += searchRequest[skipLength + 1] + 2; // skip int sizeLimit
   skipLength += searchRequest[skipLength + 1] + 2; // skip int timeLimit
   skipLength += searchRequest[skipLength + 1] + 2; // skip bool typesOnly
+  // std::vector<unsigned char> filter;
+  //  std::copy(searchRequest.begin() + skipLength, searchRequest.end(),
+  //          filter.begin());
   skipLength += searchRequest[skipLength + 1] + 2; // skip sequence filter
   // skipLength += searchRequest[skipLength + 1] + 2; // skip sequence
   // attributes
@@ -387,7 +418,7 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   return 0;
 }
 
-int loadEnvelope(unsigned char *bindRequest, int comm_socket) {
+int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
   unsigned char buff[2048];
   int res = 0;
   for (;;) {
@@ -408,7 +439,9 @@ int loadEnvelope(unsigned char *bindRequest, int comm_socket) {
 
       // if whole message received, return response
       if (res >= length + 2) {
-        memcpy(bindRequest, buff, length + 2); // returns bind request
+        for (int i = 0; i < length + 2; i++) { // returns bind request
+          bindRequest.push_back(buff[i]);
+        }
         return length + 2;
       }
     } else // error or end of connection

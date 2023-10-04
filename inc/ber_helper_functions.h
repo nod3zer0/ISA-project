@@ -14,6 +14,16 @@ int ParseINT(unsigned char *s, int *err);
  * @param value int to be written
  * @return -1 if error, 0 if success
  */
+
+typedef enum filterTypes {
+  AND,
+  OR,
+  NOT,
+  equalityMatch,
+  substrings,
+  undefined,
+} filterTypes;
+
 int writeInt(unsigned char *s, int value);
 
 int ParseLength(unsigned char *start, int *err);
@@ -25,3 +35,6 @@ unsigned char *skipTags(unsigned char *start, int n, int *err);
 unsigned char *goIntoTag(unsigned char *start, int *err);
 
 void IncreaseLength4Bytes(unsigned char *start, int n, int *err);
+
+filterTypes getFilterType(unsigned char *start) ;
+

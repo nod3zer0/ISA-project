@@ -34,7 +34,8 @@ void SigCatcher(int n) {
 //     // printf("value: %d\n", value);
 
 // //   // __________________TEST skipTags________________________
-// //   unsigned char bytes[17]{0x30, 0x0e, 0x02, 0x82, 0x00, 0x01, 0x01, 0x61, 0x07,
+// //   unsigned char bytes[17]{0x30, 0x0e, 0x02, 0x82, 0x00, 0x01, 0x01, 0x61,
+// 0x07,
 // //                           0x0a, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
 // //   int err;
 // //   unsigned char *ptr = goIntoTag(bytes, &err);
@@ -47,6 +48,15 @@ void SigCatcher(int n) {
 // //   printf("tag: %x\n", *((unsigned char *)ptr));
 
 //   // 0x30 0x0c 0x02 0x01 0x01 0x61 0x07 0x0a 0x01 0x00 0x04 0x00 0x04 0x00
+
+//   unsigned char bytes[17]{0x84, 0x12, 0x34, 0x56, 0x78, 0x07, 0x0a,
+//                           0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
+//   int err;
+//   int lenght = ParseLength(bytes, &err);
+//   printf("lenght: %d\n", lenght);
+//   IncreaseLength4Bytes(bytes, 4, &err);
+//   lenght = ParseLength(bytes, &err);
+//   printf("lenght: %d\n", lenght);
 // }
 
 int main(int argc, const char *argv[]) {
@@ -64,7 +74,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(11002);
+  sa.sin6_port = htons(10011);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);
@@ -76,12 +86,12 @@ int main(int argc, const char *argv[]) {
 
   signal(SIGCHLD, SigCatcher);
 
-  //while (1)  TODO: reactivate forking
+  // while (1)  TODO: reactivate forking
   {
     int comm_socket =
         accept(welcome_socket, (struct sockaddr *)&sa_client, &sa_client_len);
-    //if (comm_socket <= 0)  TODO: reactivate forking
-    // continue;  TODO: reactivate forking
+    // if (comm_socket <= 0)  TODO: reactivate forking
+    //  continue;  TODO: reactivate forking
 
     int pid = fork();
     if (pid < 0) {
@@ -162,7 +172,7 @@ int main(int argc, const char *argv[]) {
       //   }
 
       // request -> response
-      unsigned char bindRequest[2048];
+      std::vector<unsigned char> bindRequest;
       int lenght = loadEnvelope(bindRequest, comm_socket);
       if (lenght < 0) {
         printf("error receiving message\n"); // TODO send err
@@ -170,15 +180,16 @@ int main(int argc, const char *argv[]) {
         exit(0);
       }
       printf("received message\n");
-      unsigned char bindResponse[2048];
+      std::vector<unsigned char> bindResponse;
       int responseLenght =
           CreateBindResponse(bindRequest, bindResponse); // TODO : check err
-      send(comm_socket, bindResponse, responseLenght, 0);
+      send(comm_socket, &bindResponse[0], bindResponse.size(), 0);
 
       // search request -> search response
 
-      unsigned char envelope[2048];
+      std::vector<unsigned char> envelope;
       while (1) {
+        envelope.clear();
         loadEnvelope(envelope, comm_socket);
         if (lenght < 0) {
           printf("error receiving message\n"); // TODO send err

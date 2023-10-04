@@ -7,7 +7,7 @@ LIBPATH :=
 LIBS :=
 
 FLAGS :=  -Wall -g
-CCFLAGS := $(FLAGS) --std=c++20
+CCFLAGS := $(FLAGS) --std=c++20 -lstdc++
 CXXFLAGS := $(FLAGS)
 
 CC := gcc

@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+filterTypes getFilterType(unsigned char *start) {
+  if (start[0] == 0xA0) {
+    return AND;
+  } else if (start[0] == 0xA1) {
+    return OR;
+  } else if (start[0] == 0xA2) {
+    return NOT;
+  } else if (start[0] == 0xA3) {
+    return equalityMatch;
+  } else if (start[0] == 0xA4) {
+    return substrings;
+  }
+  return undefined;
+}
+
 int GetNumberOfBytesNeddedForINT(int value) {
   if (value < 0) {
     return -1;
