@@ -1,4 +1,5 @@
 // #include "inc/ber_helper_functions.h"
+#include "inc/database_object.h"
 #include "inc/ldap_comunication.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -58,6 +59,43 @@ void SigCatcher(int n) {
 //   lenght = ParseLength(bytes, &err);
 //   printf("lenght: %d\n", lenght);
 // }
+// test databaseObject
+// int main(int argc, const char *argv[]) {
+
+//   int x = 0;
+//   databaseController db("ldap-lidi-ascii.csv");
+//   database_object obj = db.loadNextRow();
+//   std::vector<unsigned char> name = obj.get_name();
+//   std::vector<unsigned char> uid = obj.get_uid();
+//   std::vector<unsigned char> email = obj.get_email();
+//   name.push_back(0);
+//   uid.push_back(0);
+//   email.push_back(0);
+//   printf("name: %s\n", &name[0]);
+//   printf("uid: %s\n", &uid[0]);
+//   printf("email: %s\n", &email[0]);
+//   obj = db.loadNextRow();
+//   name = obj.get_name();
+//   uid = obj.get_uid();
+//   email = obj.get_email();
+//   name.push_back(0);
+//   uid.push_back(0);
+//   email.push_back(0);
+//   printf("name: %s\n", &name[0]);
+//   printf("uid: %s\n", &uid[0]);
+//   printf("email: %s\n", &email[0]);
+//   databaseController db2("ldap-lidi-ascii.csv");
+//   obj = db2.loadNextRow();
+//   name = obj.get_name();
+//   uid = obj.get_uid();
+//   email = obj.get_email();
+//   name.push_back(0);
+//   uid.push_back(0);
+//   email.push_back(0);
+//   printf("name: %s\n", &name[0]);
+//   printf("uid: %s\n", &uid[0]);
+//   printf("email: %s\n", &email[0]);
+// }
 
 int main(int argc, const char *argv[]) {
   int rc;
@@ -89,7 +127,8 @@ int main(int argc, const char *argv[]) {
   // while (1)  TODO: reactivate forking
   {
     int comm_socket =
-        accept(welcome_socket, (struct sockaddr *)&sa_client, &sa_client_len);
+        accept(welcome_socket, (struct sockaddr *)&sa_client,
+        &sa_client_len);
     // if (comm_socket <= 0)  TODO: reactivate forking
     //  continue;  TODO: reactivate forking
 
@@ -106,7 +145,8 @@ int main(int argc, const char *argv[]) {
       printf("New connection (maintained by %d):\n", child_pid);
       if (inet_ntop(AF_INET6, &sa_client.sin6_addr, str, sizeof(str))) {
         printf("%d:Client address is %s\n", child_pid, str);
-        printf("%d:Client port is %d\n", child_pid, ntohs(sa_client.sin6_port));
+        printf("%d:Client port is %d\n", child_pid,
+        ntohs(sa_client.sin6_port));
       }
       // 30 11 02 01 01 61 0C 02 01 01 0A 01 00 04 02 A2 4F 04 00
       //  unsigned char bytes[19]{0x30, 0x11, 0x02, 0x01, 0x01, 0x61, 0x0C,
@@ -117,8 +157,10 @@ int main(int argc, const char *argv[]) {
       //  0x02, 0x01, 0x01, 0x0A, 0x01, 0x00};
 
       // 30 13 02 01 01 61 0E 02 01 01 0A 01 00 04 02 A2 4F 04 02  A2 4F
-      // unsigned char bytes[21]{0x30, 0x13, 0x02, 0x01, 0x01, 0x61, 0x0E, 0x02,
-      // 0x01, 0x01, 0x0A, 0x01, 0x00, 0x04, 0x02, 0xA2, 0x4F, 0x04, 0x02, 0xA2,
+      // unsigned char bytes[21]{0x30, 0x13, 0x02, 0x01, 0x01, 0x61, 0x0E,
+      0x02,
+      // 0x01, 0x01, 0x0A, 0x01, 0x00, 0x04, 0x02, 0xA2, 0x4F, 0x04, 0x02,
+      0xA2,
       // 0x4F};
 
       // 30 0F 02 01 01 61 0A 02 01 01 0A 01 00 04 00 04 00
@@ -126,7 +168,8 @@ int main(int argc, const char *argv[]) {
       //  0x02, 0x01, 0x01, 0x0A, 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
       //________works
       // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
-      // unsigned char bytes[15]{0x30, 0x0c, 0x02, 0x01, 0x01, 0x61, 0x07, 0x0a,
+      // unsigned char bytes[15]{0x30, 0x0c, 0x02, 0x01, 0x01, 0x61, 0x07,
+      0x0a,
       // 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
       //________
 
@@ -161,7 +204,8 @@ int main(int argc, const char *argv[]) {
       //         printf("received message\n");
 
       //         unsigned char bindResponse[2048];
-      //         int responseLenght = CreateBindResponse(buff, bindResponse); //
+      //         int responseLenght = CreateBindResponse(buff, bindResponse);
+      //
       //         TODO : check err send(comm_socket, bindResponse,
       //         responseLenght, 0); length = 0;
       //       }
