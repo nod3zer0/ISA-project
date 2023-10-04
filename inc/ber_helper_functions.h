@@ -1,4 +1,4 @@
-
+#include <vector>
 /**
  * @brief parses 1 integer from ldap coded message
  *
@@ -26,13 +26,13 @@ typedef enum filterTypes {
 
 int writeInt(unsigned char *s, int value);
 
-int ParseLength(unsigned char *start, int *err);
+int ParseLength(std::vector<unsigned char>::iterator start, int *err);
 
-int getLengthLength(unsigned char *start, int *err);
+int getLengthLength(std::vector<unsigned char>::iterator start, int *err);
 
-unsigned char *skipTags(unsigned char *start, int n, int *err);
+void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err);
 
-unsigned char *goIntoTag(unsigned char *start, int *err);
+void goIntoTag(std::vector<unsigned char>::iterator &start, int *err);
 
 void IncreaseLength4Bytes(unsigned char *start, int n, int *err);
 

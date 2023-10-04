@@ -1,76 +1,77 @@
 #include "inc/ldap_comunication.h"
+
 /// @brief Inicializes and alocates partial empty attribute list
 /// @param partialAttributeList pointer to empty attribute list
 /// @return 0 if success, -1 if error
-int InitSearchResultEntry(unsigned char **partialAttributeList, char *messageID,
-                          unsigned char *LDAPDN, int LDAPDNLength) {
+int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
+                          std::vector<unsigned char> messageID,
+                          std::vector<unsigned char> LDAPDN,
+                          int LDAPDNLength) {
   // 64 04 04 00 30 00
   // all tags + all lengths = 11
-  (*partialAttributeList) = (unsigned char *)malloc(11 + messageID[1]);
 
-  (*partialAttributeList)[0] = BER_SEQUENCE_C;
-  (*partialAttributeList)[1] = 0x09 + LDAPDNLength; // length of sequence
+  partialAttributeList.push_back(BER_SEQUENCE_C);
+  partialAttributeList.push_back(0x09 + LDAPDNLength); // length of sequence
 
   // message ID
-  (*partialAttributeList)[2] = BER_INT_C;
-  (*partialAttributeList)[3] = messageID[1]; // length of message ID
-  (*partialAttributeList)[4] = messageID[0]; // message ID
+  partialAttributeList.push_back(BER_INT_C);
+  partialAttributeList.push_back(messageID[1]); // length of message ID
+  partialAttributeList.push_back(messageID[0]); // message ID
   // copies messageID to bind response
   // _____________________________________________________________
-  int x = 0;
-  if (1 < (*partialAttributeList)[3]) {
-    x = 1;
-    for (; x < messageID[1]; x++) {
-      (*partialAttributeList)[4 + x] = messageID[x];
-    }
-  } // extends length of sequence by length of message ID
+  //   int x = 0; //TODO: support longform
+  //   if (1 < (*partialAttributeList)[3]) {
+  //     x = 1;
+  //     for (; x < messageID[1]; x++) {
+  //       (*partialAttributeList)[4 + x] = messageID[x];
+  //     }
+  //   } // extends length of sequence by length of message ID
 
-  (*partialAttributeList)[1] += x;
+  // (*partialAttributeList)[1] += x;
   //_____________________________________________________________________________________________
   // error checking
-  if ((*partialAttributeList) == NULL) {
-    return -1;
-  }
+  //   if ((*partialAttributeList) == NULL) {
+  //     return -1;
+  //   }
 
-  (*partialAttributeList)[5 + x] =
-      BER_SEARCH_RESULT_ENTRY_C; // Aplication 4 tag
-  (*partialAttributeList)[6 + x] =
-      0x04 + LDAPDNLength; // length of PartialAttributeList
-  // LDAPN
-  (*partialAttributeList)[7 + x] = BER_OCTET_STRING_C; // octet string
-  (*partialAttributeList)[8 + x] = LDAPDNLength;       // length of string
+  partialAttributeList.push_back(BER_SEARCH_RESULT_ENTRY_C); // Aplication 4 tag
+  partialAttributeList.push_back(0x04 +
+                                 LDAPDNLength); // length of
+                                                // PartialAttributeList LDAPN
+  partialAttributeList.push_back(BER_OCTET_STRING_C); // octet string
+  partialAttributeList.push_back(LDAPDNLength);       // length of string
 
   int i = 0;
   for (; i < LDAPDNLength; i++) {
-    (*partialAttributeList)[9 + x + i] = LDAPDN[i];
+    partialAttributeList.push_back(LDAPDN[i]);
   }
 
   // sequence
-  (*partialAttributeList)[9 + x + i] = BER_SEQUENCE_C;
-  (*partialAttributeList)[10 + x + i] = 0x00; // length of sequence
+  partialAttributeList.push_back(BER_SEQUENCE_C);
+  partialAttributeList.push_back(0x00); // length of sequence
   // TODO
   return 0;
 }
 
-int AddToSearchResultEntry(unsigned char **partialAttributeList,
-                           unsigned char *attributeDescription,
+int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
+                           std::vector<unsigned char> &attributeDescription,
                            int attributeDescriptionLength,
-                           unsigned char *attributeValue,
+                           std::vector<unsigned char> &attributeValue,
                            int attributeValueLength) {
   int err = 0;
   int numberOfNewTags = 4;
   int numberOfNewLengths = 4;
   int increaseBy = numberOfNewTags + numberOfNewLengths + attributeValueLength +
                    attributeDescriptionLength;
-  unsigned char *newPartialAttributeList = (unsigned char *)realloc(
-      (*partialAttributeList),
-      increaseBy + ParseLength((*partialAttributeList) + 1, &err) +
-          2); // todo: support longform
-  // error checking
-  if (newPartialAttributeList == NULL) {
-    return -1;
-  }
-  (*partialAttributeList) = newPartialAttributeList;
+  //   unsigned char *newPartialAttributeList = (unsigned char *)realloc(
+  //       (*partialAttributeList),
+  //       increaseBy + ParseLength((*partialAttributeList) + 1, &err) +
+  //           2); // todo: support longform
+  //   // error checking
+  //   if (newPartialAttributeList == NULL) {
+  //     return -1;
+  //   }
+  //   (*partialAttributeList) = newPartialAttributeList;
 
   // Sequence
   //      string messageID
@@ -82,60 +83,78 @@ int AddToSearchResultEntry(unsigned char **partialAttributeList,
   //                  set
   //                      string attributeValue
 
-  if ((*partialAttributeList)[1] + increaseBy >
+  if (partialAttributeList[1] + increaseBy >
       0x7F) { // TODO: implement longform increase
     printf("increaseBy too big, not implemented!\n");
   }
-  (*partialAttributeList)[1] += increaseBy;
+  partialAttributeList[1] += increaseBy;
 
-  unsigned char *locationOfSequence =
-      goIntoTag((*partialAttributeList), &err); // go into sequence
+  std::vector<unsigned char>::iterator locationOfSequence =
+      partialAttributeList.begin();
+  goIntoTag(locationOfSequence, &err); // go into sequence
   if (err != 0)
     return -1;
-  locationOfSequence =
-      skipTags(locationOfSequence, 1, &err); // skip string messageID
+  skipTags(locationOfSequence, 1, &err); // skip string messageID
   if (err != 0)
     return -1;
   *(locationOfSequence + 1) += increaseBy; // TODO: longform
-  locationOfSequence =
-      goIntoTag(locationOfSequence, &err); // go into application 4
+  goIntoTag(locationOfSequence, &err);     // go into application 4
   if (err != 0)
     return -1;
-  locationOfSequence =
-      skipTags(locationOfSequence, 1, &err); // skip string LDAPDN
-  unsigned char *locationOfPartialAttributeList = locationOfSequence;
+  skipTags(locationOfSequence, 1, &err); // skip string LDAPDN
+  std::vector<unsigned char>::iterator  locationOfPartialAttributeList = locationOfSequence;
   if (err != 0)
     return -1;
-  locationOfSequence = skipTags(
-      locationOfSequence, 1, &err); // skip to the end of partialAttributeList
+  skipTags(locationOfSequence, 1,
+           &err); // skip to the end of partialAttributeList
   if (err != 0)
     return -1;
 
   *(locationOfPartialAttributeList + 1) += increaseBy; // TODO: longform
 
+partialAttributeList.push_back(BER_SEQUENCE_C);
+partialAttributeList.push_back(increaseBy - 2);
+
+// add attribute description
+partialAttributeList.push_back(BER_OCTET_STRING_C);         // octet string
+partialAttributeList.push_back(attributeDescriptionLength); // length of string
+for (int i = 0; i < attributeDescriptionLength; i++) {
+    partialAttributeList.push_back(attributeDescription[i]);
+}
+
+partialAttributeList.push_back(BER_SET_C); // set A0
+partialAttributeList.push_back(attributeValueLength + 2); // length of sequence
+// add attribute value
+partialAttributeList.push_back(BER_OCTET_STRING_C); // octet string
+partialAttributeList.push_back(attributeValueLength); // length of string
+for (int i = 0; i < attributeValueLength; i++) {
+    partialAttributeList.push_back(attributeValue[i]);
+}
+
   // create sequence at the end
-  (locationOfSequence)[0] = BER_SEQUENCE_C;
-  (locationOfSequence)[1] = increaseBy - 2;
 
-  // add attribute description
-  (locationOfSequence)[2] = BER_OCTET_STRING_C;         // octet string
-  (locationOfSequence)[3] = attributeDescriptionLength; // length of string
-  for (int i = 0; i < attributeDescriptionLength; i++) {
-    (locationOfSequence)[4 + i] = attributeDescription[i];
-  }
+//   (locationOfSequence)[0] = BER_SEQUENCE_C;
+//   (locationOfSequence)[1] = increaseBy - 2;
 
-  (locationOfSequence)[4 + attributeDescriptionLength] = BER_SET_C; // set A0
-  (locationOfSequence)[5 + attributeDescriptionLength] =
-      attributeValueLength + 2; // length of sequence
-  // add attribute value
-  (locationOfSequence)[6 + attributeDescriptionLength] =
-      BER_OCTET_STRING_C; // octet string
-  (locationOfSequence)[7 + attributeDescriptionLength] =
-      attributeValueLength; // length of string
-  for (int i = 0; i < attributeValueLength; i++) {
-    (locationOfSequence)[8 + attributeDescriptionLength + i] =
-        attributeValue[i];
-  }
+//   // add attribute description
+//   (locationOfSequence)[2] = BER_OCTET_STRING_C;         // octet string
+//   (locationOfSequence)[3] = attributeDescriptionLength; // length of string
+//   for (int i = 0; i < attributeDescriptionLength; i++) {
+//     (locationOfSequence)[4 + i] = attributeDescription[i];
+//   }
+
+//   (locationOfSequence)[4 + attributeDescriptionLength] = BER_SET_C; // set A0
+//   (locationOfSequence)[5 + attributeDescriptionLength] =
+//       attributeValueLength + 2; // length of sequence
+//   // add attribute value
+//   (locationOfSequence)[6 + attributeDescriptionLength] =
+//       BER_OCTET_STRING_C; // octet string
+//   (locationOfSequence)[7 + attributeDescriptionLength] =
+//       attributeValueLength; // length of string
+//   for (int i = 0; i < attributeValueLength; i++) {
+//     (locationOfSequence)[8 + attributeDescriptionLength + i] =
+//         attributeValue[i];
+//   }
 
   return 0;
 }
@@ -158,14 +177,14 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   // copies messageID to bind response
   // _____________________________________________________________
 
-  bindResponse.push_back(bindRequest[4]); //TODO: support longform
+  bindResponse.push_back(bindRequest[4]); // TODO: support longform
 
   // extends length of sequence by length of message ID
   //_____________________________________________________________________________________________
 
   // bind response
   bindResponse.push_back(BER_BIND_RESPONSE_C); // BindResponse tag
-  bindResponse.push_back(0x07);               // length of bind response
+  bindResponse.push_back(0x07);                // length of bind response
   // LDAP result
   bindResponse.push_back(BER_ENUM_C);       // enum
   bindResponse.push_back(0x01);             // length of enum
@@ -325,6 +344,7 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   searchRequestType sr;
   // inicialization TODO make constructor
   sr.messageIDLength = 0;
+  sr.messageID = new std::vector<unsigned char>();
   sr.sizeLimit = 0;
   sr.attributes.cn = false;
   sr.attributes.email = false;
@@ -335,11 +355,11 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   int skipLength = 2; // skip envelope tag and lenght
   // set message ID
   sr.messageIDLength = searchRequest[skipLength + 1];
-  sr.messageID = (char *)malloc(sr.messageIDLength);
+ // sr.messageID = (char *)malloc(sr.messageIDLength);
   // memcpy(sr.messageID, &searchRequest[0] + skipLength, sr.messageIDLength +
   // 2);
   for (int i = 0; i < sr.messageIDLength + 2; i++) {
-    sr.messageID[i] = searchRequest[2 + i];
+    sr.messageID->push_back(searchRequest[2 + i]);
   }
 
   // ---------------------------------------------
@@ -385,13 +405,17 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
     skipLength += 2 + atrributeLength;
   }
 
-  unsigned char testVal[] = "cn";
-  unsigned char testVal2[] = "test";
-  unsigned char testVal3[] = "test3";
-  unsigned char testVal4[] = "cgn";
+   std::vector<unsigned char> testVal;
+   testVal.insert(testVal.end(), { 'c', 'n',});
+   std::vector<unsigned char> testVal2;
+      testVal2.insert(testVal2.end(), { 't', 'e', 's', 't'});
+   std::vector<unsigned char> testVal3;
+      testVal3.insert(testVal3.end(), { 't', 'e', 's', 't', '3',});
+   std::vector<unsigned char> testVal4;
+      testVal4.insert(testVal4.end(), { 'c', 'g', 'n'});
 
-  unsigned char *searchResultEntry;
-  InitSearchResultEntry(&searchResultEntry, sr.messageID, testVal3, 5);
+  std::vector<unsigned char> searchResultEntry;
+  InitSearchResultEntry(searchResultEntry, *(sr.messageID), testVal3, 5);
 
   // print searchResultEntry hex values
   printf("searchResultEntry: ");
@@ -400,11 +424,11 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   }
   printf("\n");
 
-  AddToSearchResultEntry(&searchResultEntry, testVal, 2, testVal2, 4);
-  AddToSearchResultEntry(&searchResultEntry, testVal4, 3, testVal3, 5);
+  AddToSearchResultEntry(searchResultEntry, testVal, 2, testVal2, 4);
+  AddToSearchResultEntry(searchResultEntry, testVal4, 3, testVal3, 5);
 
-  send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
-  send(comm_socket, searchResultEntry, searchResultEntry[1] + 2, 0);
+  send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
+  send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
 
   sendSearchResultDone(searchRequest, comm_socket);
 
