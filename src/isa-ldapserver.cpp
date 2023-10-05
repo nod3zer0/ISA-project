@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "inc/ber_object.h"
 #define WELCOME_MSG                                                            \
   "Hi, type anything. To end type 'bye.' at a separate line.\n"
 
@@ -98,6 +99,31 @@ void SigCatcher(int n) {
 // }
 
 int main(int argc, const char *argv[]) {
+    //test filter objects
+    filter *f1 = new andFilter();
+
+
+    printf("filter type: %d\n", f1->getFilterType());
+
+    // cast to andFilter
+    andFilter *f2 = (andFilter *)f1;
+
+    printf("filter type: %d\n", f2->getFilterType());
+
+    f2->filters.push_back(new andFilter());
+    f2->filters.push_back(new orFilter());
+    f2->filters.push_back(new notFilter());
+
+    for (int i = 0; i < f2->filters.size(); i++) {
+        printf("filter type: %d\n", f2->filters[i]->getFilterType());
+    }
+
+
+
+}
+
+/*
+int main(int argc, const char *argv[]) {
   int rc;
   int welcome_socket;
   struct sockaddr_in6 sa;
@@ -158,9 +184,9 @@ int main(int argc, const char *argv[]) {
 
       // 30 13 02 01 01 61 0E 02 01 01 0A 01 00 04 02 A2 4F 04 02  A2 4F
       // unsigned char bytes[21]{0x30, 0x13, 0x02, 0x01, 0x01, 0x61, 0x0E,
-      0x02,
+      //0x02,
       // 0x01, 0x01, 0x0A, 0x01, 0x00, 0x04, 0x02, 0xA2, 0x4F, 0x04, 0x02,
-      0xA2,
+      //0xA2,
       // 0x4F};
 
       // 30 0F 02 01 01 61 0A 02 01 01 0A 01 00 04 00 04 00
@@ -169,7 +195,7 @@ int main(int argc, const char *argv[]) {
       //________works
       // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
       // unsigned char bytes[15]{0x30, 0x0c, 0x02, 0x01, 0x01, 0x61, 0x07,
-      0x0a,
+      //0x0a,
       // 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
       //________
 
@@ -316,3 +342,5 @@ int main(int argc, const char *argv[]) {
     }
   }
 }
+
+*/
