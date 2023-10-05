@@ -1,3 +1,5 @@
+#ifndef BER_HELPER_FUNCTIONS_H
+#define BER_HELPER_FUNCTIONS_H
 #include <vector>
 /**
  * @brief parses 1 integer from ldap coded message
@@ -38,3 +40,4 @@ void IncreaseLength4Bytes(unsigned char *start, int n, int *err);
 
 filterTypes getFilterType(unsigned char *start) ;
 
+#endif

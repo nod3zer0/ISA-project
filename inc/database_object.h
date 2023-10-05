@@ -1,3 +1,5 @@
+#ifndef DATABASE_OBJECT_H
+#define DATABASE_OBJECT_H
 #include <vector>
 #include <string>
 #include <iostream>
@@ -25,3 +27,4 @@ class databaseController{
     databaseController(std::string fileName);
     ~databaseController();
 };
+#endif
