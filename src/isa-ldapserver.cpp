@@ -1,4 +1,5 @@
 // #include "inc/ber_helper_functions.h"
+#include "inc/ber_object.h"
 #include "inc/database_object.h"
 #include "inc/ldap_comunication.h"
 #include <arpa/inet.h>
@@ -12,7 +13,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include "inc/ber_object.h"
 #define WELCOME_MSG                                                            \
   "Hi, type anything. To end type 'bye.' at a separate line.\n"
 
@@ -102,7 +102,6 @@ void SigCatcher(int n) {
 //     //test filter objects
 //     filter *f1 = new andFilter();
 
-
 //     printf("filter type: %d\n", f1->getFilterType());
 
 //     // cast to andFilter
@@ -113,9 +112,10 @@ void SigCatcher(int n) {
 //     f2->filters.push_back(new andFilter());
 //     f2->filters.push_back(new orFilter());
 //     f2->filters.push_back(new notFilter());
-//     f2->filters.push_back(new SubstringFilter(std::vector<unsigned char>(), std::vector<unsigned char>(), std::vector<unsigned char>()));
-//     f2->filters.push_back(new equalityMatchFilter(std::vector<unsigned char>(), std::vector<unsigned char>()));
-
+//     f2->filters.push_back(new SubstringFilter(std::vector<unsigned char>(),
+//     std::vector<unsigned char>(), std::vector<unsigned char>()));
+//     f2->filters.push_back(new equalityMatchFilter(std::vector<unsigned
+//     char>(), std::vector<unsigned char>()));
 
 //     for (int i = 0; i < f2->filters.size(); i++) {
 //         //printf("filter type: %d\n", f2->filters[i]->getFilterType());
@@ -142,12 +142,7 @@ void SigCatcher(int n) {
 //         }
 //     }
 
-
-
-
 // }
-
-
 
 int main(int argc, const char *argv[]) {
   int rc;
@@ -164,7 +159,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(10011);
+  sa.sin6_port = htons(10014);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);
@@ -179,8 +174,7 @@ int main(int argc, const char *argv[]) {
   // while (1)  TODO: reactivate forking
   {
     int comm_socket =
-        accept(welcome_socket, (struct sockaddr *)&sa_client,
-        &sa_client_len);
+        accept(welcome_socket, (struct sockaddr *)&sa_client, &sa_client_len);
     // if (comm_socket <= 0)  TODO: reactivate forking
     //  continue;  TODO: reactivate forking
 
@@ -197,8 +191,7 @@ int main(int argc, const char *argv[]) {
       printf("New connection (maintained by %d):\n", child_pid);
       if (inet_ntop(AF_INET6, &sa_client.sin6_addr, str, sizeof(str))) {
         printf("%d:Client address is %s\n", child_pid, str);
-        printf("%d:Client port is %d\n", child_pid,
-        ntohs(sa_client.sin6_port));
+        printf("%d:Client port is %d\n", child_pid, ntohs(sa_client.sin6_port));
       }
       // 30 11 02 01 01 61 0C 02 01 01 0A 01 00 04 02 A2 4F 04 00
       //  unsigned char bytes[19]{0x30, 0x11, 0x02, 0x01, 0x01, 0x61, 0x0C,
@@ -210,9 +203,9 @@ int main(int argc, const char *argv[]) {
 
       // 30 13 02 01 01 61 0E 02 01 01 0A 01 00 04 02 A2 4F 04 02  A2 4F
       // unsigned char bytes[21]{0x30, 0x13, 0x02, 0x01, 0x01, 0x61, 0x0E,
-      //0x02,
+      // 0x02,
       // 0x01, 0x01, 0x0A, 0x01, 0x00, 0x04, 0x02, 0xA2, 0x4F, 0x04, 0x02,
-      //0xA2,
+      // 0xA2,
       // 0x4F};
 
       // 30 0F 02 01 01 61 0A 02 01 01 0A 01 00 04 00 04 00
@@ -221,7 +214,7 @@ int main(int argc, const char *argv[]) {
       //________works
       // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
       // unsigned char bytes[15]{0x30, 0x0c, 0x02, 0x01, 0x01, 0x61, 0x07,
-      //0x0a,
+      // 0x0a,
       // 0x01, 0x00, 0x04, 0x00, 0x04, 0x00};
       //________
 
@@ -282,11 +275,13 @@ int main(int argc, const char *argv[]) {
       send(comm_socket, &bindResponse[0], bindResponse.size(), 0);
 
       // search request -> search response
-
+      int err = 0;
       std::vector<unsigned char> envelope;
+
       while (1) {
         envelope.clear();
         loadEnvelope(envelope, comm_socket);
+
         if (lenght < 0) {
           printf("error receiving message\n"); // TODO send err
           close(comm_socket);
@@ -294,7 +289,12 @@ int main(int argc, const char *argv[]) {
         }
         printf("received message\n");
 
-        switch (envelope[5]) {
+        std::vector<unsigned char>::iterator envelopeTagPointer =
+            envelope.begin();
+
+        goIntoTag(envelopeTagPointer, &err);
+        skipTags(envelopeTagPointer, 1, &err); // todo handle error
+        switch (envelopeTagPointer[0]) {
         case 0x63:
           printf("search request\n");
           searchRequestHandler(envelope, comm_socket);
@@ -368,4 +368,3 @@ int main(int argc, const char *argv[]) {
     }
   }
 }
-

@@ -615,77 +615,97 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   for (int i = 0; i < result.size(); i++) {
     std::vector<unsigned char> searchResultEntry;
     InitSearchResultEntry(searchResultEntry, *(sr.messageID),
-                          result[i].get_uid(),  result[i].get_uid().size());
+                          result[i].get_uid(), result[i].get_uid().size());
     std::vector<unsigned char> resCN = result[i].get_name();
     std::vector<unsigned char> resEmail = result[i].get_email();
     std::vector<unsigned char> resUID = result[i].get_uid();
     AddToSearchResultEntry(searchResultEntry, cn, 2, resCN,
                            result[i].get_name().size());
     AddToSearchResultEntry(searchResultEntry, email, 5, resEmail,
-                            result[i].get_email().size());
+                           result[i].get_email().size());
     AddToSearchResultEntry(searchResultEntry, uid, 3, resUID,
-                            result[i].get_uid().size());
+                           result[i].get_uid().size());
     send(comm_socket, &searchResultEntry[0], searchResultEntry.size(), 0);
   }
 
   sendSearchResultDone(searchRequest, comm_socket);
 
-//   std::vector<unsigned char> testVal;
-//   testVal.insert(testVal.end(), {
-//                                     'c',
-//                                     'n',
-//                                 });
-//   std::vector<unsigned char> testVal2;
-//   testVal2.insert(testVal2.end(), {'t', 'e', 's', 't'});
-//   std::vector<unsigned char> testVal3;
-//   testVal3.insert(testVal3.end(), {
-//                                       't',
-//                                       'e',
-//                                       's',
-//                                       't',
-//                                       '3',
-//                                   });
-//   std::vector<unsigned char> testVal4;
-//   testVal4.insert(testVal4.end(), {'c', 'g', 'n'});
+  //   std::vector<unsigned char> testVal;
+  //   testVal.insert(testVal.end(), {
+  //                                     'c',
+  //                                     'n',
+  //                                 });
+  //   std::vector<unsigned char> testVal2;
+  //   testVal2.insert(testVal2.end(), {'t', 'e', 's', 't'});
+  //   std::vector<unsigned char> testVal3;
+  //   testVal3.insert(testVal3.end(), {
+  //                                       't',
+  //                                       'e',
+  //                                       's',
+  //                                       't',
+  //                                       '3',
+  //                                   });
+  //   std::vector<unsigned char> testVal4;
+  //   testVal4.insert(testVal4.end(), {'c', 'g', 'n'});
 
-//   std::vector<unsigned char> searchResultEntry;
-//   InitSearchResultEntry(searchResultEntry, *(sr.messageID), testVal3, 5);
+  //   std::vector<unsigned char> searchResultEntry;
+  //   InitSearchResultEntry(searchResultEntry, *(sr.messageID), testVal3, 5);
 
-//   // print searchResultEntry hex values
-//   printf("searchResultEntry: ");
-//   for (int i = 0; i < searchResultEntry[1] + 2; i++) {
-//     printf("%02x ", searchResultEntry[i]);
-//   }
-//   printf("\n");
+  //   // print searchResultEntry hex values
+  //   printf("searchResultEntry: ");
+  //   for (int i = 0; i < searchResultEntry[1] + 2; i++) {
+  //     printf("%02x ", searchResultEntry[i]);
+  //   }
+  //   printf("\n");
 
-//   AddToSearchResultEntry(searchResultEntry, testVal, 2, testVal2, 4);
-//   AddToSearchResultEntry(searchResultEntry, testVal4, 3, testVal3, 5);
+  //   AddToSearchResultEntry(searchResultEntry, testVal, 2, testVal2, 4);
+  //   AddToSearchResultEntry(searchResultEntry, testVal4, 3, testVal3, 5);
 
-//   send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
-//   send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
+  //   send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
+  //   send(comm_socket, &searchResultEntry[0], searchResultEntry[1] + 2, 0);
 
-//   sendSearchResultDone(searchRequest, comm_socket);
+  //   sendSearchResultDone(searchRequest, comm_socket);
 
-//   // print searchResultEntry hex values
-//   printf("searchResultEntry: ");
-//   for (int i = 0; i < searchResultEntry[1] + 2; i++) {
-//     printf("%02x ", searchResultEntry[i]);
-//   }
-//   printf("\n");
+  //   // print searchResultEntry hex values
+  //   printf("searchResultEntry: ");
+  //   for (int i = 0; i < searchResultEntry[1] + 2; i++) {
+  //     printf("%02x ", searchResultEntry[i]);
+  //   }
+  //   printf("\n");
 
   return 0;
 }
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
-  unsigned char buff[2048];
-  int res = 0;
-  for (;;) {
-    if (res >= 1024) { // TODO: eroro
-      printf("message too long\n");
-      break;
+  unsigned char buff[1024];
+  int lenghtOfMessage = 0;
+  int err;
+  int resNow = 0;
+  int resAll = 0;
+  for (;;) { // loads lenght of message
+
+    resNow += recv(comm_socket, buff + resNow, 1024, 0);
+    if (resNow >= 2) {
+      int TODOtestval = buff[1] & 0x7F;
+      if ((buff[1] < 0x80) ||
+          (buff[1] & 0x7F) <= resNow) { // checks if bytes containing lenght of
+        // message are complete
+        bindRequest.insert(bindRequest.end(), buff, buff + resNow);
+        lenghtOfMessage = ParseLength(bindRequest.begin() + 1, &err) +
+                          getLengthLength(bindRequest.begin() + 1, &err) + 1;
+        break;
+      }
     }
-    res += recv(comm_socket, buff + res, 1024, 0);
-    if (res > 0) {
+  }
+  resAll = resNow;
+  for (;;) {
+    resNow = 0;
+    if (resAll < lenghtOfMessage) {
+      resNow += recv(comm_socket, buff, 1024, 0);
+      resAll += resNow;
+    }
+
+    if (resAll > 0) {
       // check if message is envelope
       if (buff[0] != 0x30) { // not a sequence //TODO check for bind request
         printf("invalid message\n");
@@ -695,11 +715,9 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
       int length = 0;
       length = buff[1]; // TODO: check if works
 
+      bindRequest.insert(bindRequest.end(), buff, buff + resNow);
       // if whole message received, return response
-      if (res >= length + 2) {
-        for (int i = 0; i < length + 2; i++) { // returns bind request
-          bindRequest.push_back(buff[i]);
-        }
+      if (resAll >= lenghtOfMessage) {
         return length + 2;
       }
     } else // error or end of connection
