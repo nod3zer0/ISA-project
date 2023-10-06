@@ -18,7 +18,7 @@ public:
 
 class orFilter : public filter {
 public:
-  std::vector<filter> filters;
+  std::vector<filter*> filters;
   filterTypes getFilterType();
 };
 

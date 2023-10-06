@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 
-filterTypes getFilterType(unsigned char *start) {
+filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
   if (start[0] == 0xA0) {
     return AND;
   } else if (start[0] == 0xA1) {

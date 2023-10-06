@@ -98,31 +98,57 @@ void SigCatcher(int n) {
 //   printf("email: %s\n", &email[0]);
 // }
 
-int main(int argc, const char *argv[]) {
-    //test filter objects
-    filter *f1 = new andFilter();
+// int main(int argc, const char *argv[]) {
+//     //test filter objects
+//     filter *f1 = new andFilter();
 
 
-    printf("filter type: %d\n", f1->getFilterType());
+//     printf("filter type: %d\n", f1->getFilterType());
 
-    // cast to andFilter
-    andFilter *f2 = (andFilter *)f1;
+//     // cast to andFilter
+//     andFilter *f2 = (andFilter *)f1;
 
-    printf("filter type: %d\n", f2->getFilterType());
+//     printf("filter type: %d\n", f2->getFilterType());
 
-    f2->filters.push_back(new andFilter());
-    f2->filters.push_back(new orFilter());
-    f2->filters.push_back(new notFilter());
-
-    for (int i = 0; i < f2->filters.size(); i++) {
-        printf("filter type: %d\n", f2->filters[i]->getFilterType());
-    }
+//     f2->filters.push_back(new andFilter());
+//     f2->filters.push_back(new orFilter());
+//     f2->filters.push_back(new notFilter());
+//     f2->filters.push_back(new SubstringFilter(std::vector<unsigned char>(), std::vector<unsigned char>(), std::vector<unsigned char>()));
+//     f2->filters.push_back(new equalityMatchFilter(std::vector<unsigned char>(), std::vector<unsigned char>()));
 
 
+//     for (int i = 0; i < f2->filters.size(); i++) {
+//         //printf("filter type: %d\n", f2->filters[i]->getFilterType());
+//         switch (f2->filters[i]->getFilterType())
+//         {
+//         case AND:
+//             printf("AND\n");
+//             break;
+//         case OR:
+//             printf("OR\n");
+//             break;
+//         case NOT:
+//             printf("NOT\n");
+//             break;
+//         case equalityMatch:
+//             printf("equalityMatch\n");
+//             break;
+//         case substrings:
+//             printf("substrings\n");
+//             break;
+//         default:
+//             printf("undefined\n");
+//             break;
+//         }
+//     }
 
-}
 
-/*
+
+
+// }
+
+
+
 int main(int argc, const char *argv[]) {
   int rc;
   int welcome_socket;
@@ -343,4 +369,3 @@ int main(int argc, const char *argv[]) {
   }
 }
 
-*/

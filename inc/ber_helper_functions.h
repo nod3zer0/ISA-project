@@ -38,6 +38,6 @@ void goIntoTag(std::vector<unsigned char>::iterator &start, int *err);
 
 void IncreaseLength4Bytes(unsigned char *start, int n, int *err);
 
-filterTypes getFilterType(unsigned char *start) ;
+filterTypes getFilterType(std::vector<unsigned char>::iterator start) ;
 
 #endif

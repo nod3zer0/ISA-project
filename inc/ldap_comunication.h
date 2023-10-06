@@ -2,6 +2,8 @@
 #define LDAP_COMUNICATION_H
 #include "inc/ber_constants.h"
 #include "inc/ber_helper_functions.h"
+#include "inc/ber_object.h"
+#include "inc/database_object.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -64,5 +66,6 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
                          int comm_socket);
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
+
 
 #endif
