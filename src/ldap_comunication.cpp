@@ -10,7 +10,18 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   // all tags + all lengths = 11
 
   partialAttributeList.push_back(BER_SEQUENCE_C);
-  partialAttributeList.push_back(0x09 + LDAPDNLength); // length of sequence
+  // longform 4 bytes
+  partialAttributeList.push_back(0x84); // length of sequence
+  std::vector<unsigned char>::iterator lengthLocation =
+      partialAttributeList.begin() + 1;
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+
+  int err = 0;
+  IncreaseLength4Bytes(lengthLocation, LDAPDNLength + 0x09,
+                       &err); // length of sequence
 
   // message ID
   partialAttributeList.push_back(BER_INT_C);
@@ -48,7 +59,15 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   // sequence
   partialAttributeList.push_back(BER_SEQUENCE_C);
   partialAttributeList.push_back(0x00); // length of sequence
-  // TODO
+                                        // TODO
+
+  // print partialAttributeList hex values
+
+  printf("partialAttributeList: ");
+  for (int i = 0; i < partialAttributeList.size(); i++) {
+    printf("%02x ", partialAttributeList[i]);
+  }
+
   return 0;
 }
 
@@ -136,6 +155,7 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   int numberOfNewLengths = 4;
   int increaseBy = numberOfNewTags + numberOfNewLengths + attributeValueLength +
                    attributeDescriptionLength;
+
   //   unsigned char *newPartialAttributeList = (unsigned char *)realloc(
   //       (*partialAttributeList),
   //       increaseBy + ParseLength((*partialAttributeList) + 1, &err) +
@@ -156,11 +176,8 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   //                  set
   //                      string attributeValue
 
-  if (partialAttributeList[1] + increaseBy >
-      0x7F) { // TODO: implement longform increase
-    printf("increaseBy too big, not implemented!\n");
-  }
-  partialAttributeList[1] += increaseBy;
+  // IncreaseLength4Bytes(partialAttributeList.begin() + 1, increaseBy, &err);
+  partialAttributeList[5] += increaseBy;
 
   std::vector<unsigned char>::iterator locationOfSequence =
       partialAttributeList.begin();
@@ -301,7 +318,10 @@ int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
 
 int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
                          int comm_socket) {
-
+  int err = 0;
+  std::vector<unsigned char>::iterator messageIDlocation =
+      searchRequest.begin();
+  goIntoTag(messageIDlocation, &err);
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
   char envelope[30];
   // sequence
@@ -309,16 +329,16 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
   envelope[1] = 0x0c; // length of sequence
   // message ID
   envelope[2] = 0x02;             // todo support bigger message ID
-  envelope[3] = searchRequest[3]; // length of message ID
-  envelope[4] = searchRequest[4]; // message ID
+  envelope[3] = messageIDlocation[1]; // length of message ID
+  envelope[4] = messageIDlocation[2]; // message ID
 
   // copies messageID to bind response
   // _____________________________________________________________
   int x = 0;
-  if (1 < searchRequest[3]) {
+  if (1 < messageIDlocation[1]) {
     x = 1;
-    for (; x < searchRequest[3]; x++) {
-      envelope[4 + x] = searchRequest[4 + x];
+    for (; x < searchRequest[1]; x++) {
+      envelope[2 + x] = searchRequest[2 + x];
     }
   } // extends length of sequence by length of message ID
   //_____________________________________________________________________________________________
@@ -501,7 +521,8 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   sr.attributes.cn = false;
   sr.attributes.email = false;
 
-  int envelopeLength = searchRequest[1] + 2; // lenght of envelope
+  int envelopeLength = searchRequest[1] + 2; // lenght of envelope TODO: support
+                                             // longform
 
   // 3: sequenc, searchRequest[4] lenght of string, 1: string tag
   int skipLength = 2; // skip envelope tag and lenght
@@ -513,24 +534,38 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   for (int i = 0; i < sr.messageIDLength + 2; i++) {
     sr.messageID->push_back(searchRequest[2 + i]);
   }
-
-  // ---------------------------------------------
-  skipLength += searchRequest[skipLength + 1] + 2; // skip message ID
-  skipLength += 2;                                 // go behind application 3
-  skipLength += searchRequest[skipLength + 1] + 2; // skip base object
-  skipLength += searchRequest[skipLength + 1] + 2; // skip enum scope
-  skipLength += searchRequest[skipLength + 1] + 2; // skip enum derefAliases
+  std::vector<unsigned char>::iterator envelopePointer = searchRequest.begin();
+  int err = 0;
+  goIntoTag(envelopePointer, &err);
+  skipTags(envelopePointer, 1, &err); // skip message ID
+  goIntoTag(envelopePointer, &err);   // go into application 3
+  skipTags(envelopePointer, 1, &err); // skip base object
+  skipTags(envelopePointer, 1, &err); // skip enum scope
+  skipTags(envelopePointer, 1, &err); // skip enum derefAliases
   sr.sizeLimit =
-      searchRequest[skipLength +
-                    2]; // set size limit TODO: support int size limit
-  skipLength += searchRequest[skipLength + 1] + 2; // skip int sizeLimit
-  skipLength += searchRequest[skipLength + 1] + 2; // skip int timeLimit
-  skipLength += searchRequest[skipLength + 1] + 2; // skip bool typesOnly
+      envelopePointer[2]; // set size limit TODO: support int size limit
+  skipTags(envelopePointer, 1, &err); // skip int sizeLimit
+  skipTags(envelopePointer, 1, &err); // skip int timeLimit
+  skipTags(envelopePointer, 1, &err); // skip bool typesOnly
+
+  //   // ---------------------------------------------
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip message ID
+  //   skipLength += 2;                                 // go behind application
+  //   3 skipLength += searchRequest[skipLength + 1] + 2; // skip base object
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip enum scope
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip enum
+  //   derefAliases sr.sizeLimit =
+  //       searchRequest[skipLength +
+  //                     2]; // set size limit TODO: support int size limit
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip int sizeLimit
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip int timeLimit
+  //   skipLength += searchRequest[skipLength + 1] + 2; // skip bool typesOnly
   // std::vector<unsigned char> filter;
   //  std::copy(searchRequest.begin() + skipLength, searchRequest.end(),
   //          filter.begin());
-  filter *f = convertToFilterObject(searchRequest.begin() + skipLength);
-  skipLength += searchRequest[skipLength + 1] + 2; // skip sequence filter
+  filter *f = convertToFilterObject(envelopePointer);
+  skipTags(envelopePointer, 1, &err); // skip filter
+  // skipLength += searchRequest[skipLength + 1] + 2; // skip sequence filter
 
   // print types of filters and their values
   printf("filter type: %d\n", f->getFilterType());
@@ -582,11 +617,17 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   // attributes
 
   // gets attribute descriptions, TODO: rework
-  skipLength += 2; // go into attributes sequence
+  // skipLength += 2; // go into attributes sequence
+
+  goIntoTag(envelopePointer, &err); // go into attributes sequence
+
+  int attributesLength = ParseLength(envelopePointer + 1, &err);
 
   char attributeDescription[200];
 
-  for (; skipLength < envelopeLength;) {
+  skipLength = 0;
+
+  for (; skipLength < attributesLength;) {
 
     // get attribute description
     int atrributeLength = 0;

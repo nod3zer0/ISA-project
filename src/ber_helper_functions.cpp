@@ -217,13 +217,15 @@ void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err) { //
 //  * @param array whole envelope
 //  * @param n number of bytes to increase
 //  */
-// void IncreaseLength4Bytes(unsigned char *start, int n, int *err) {
-//     int length = ParseLength(start, err) + n;
-//     start[1] = length >> 24;
-//     start[2] = length >> 16;
-//     start[3] = length >> 8;
-//     start[4] = length;
-// }
+void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n, int *err) {
+    int length = ParseLength(start, err) + n;
+
+    start[1] = length >> 24;
+    start[2] = length >> 16;
+    start[3] = length >> 8;
+    start[4] = length;
+
+}
 
 /**
  * @brief go into tag
