@@ -177,11 +177,19 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   //                      string attributeValue
 
   // IncreaseLength4Bytes(partialAttributeList.begin() + 1, increaseBy, &err);
-  partialAttributeList[5] += increaseBy;
+
+  // increase length of sequence
 
   std::vector<unsigned char>::iterator locationOfSequence =
       partialAttributeList.begin();
-  goIntoTag(locationOfSequence, &err); // go into sequence
+
+  // partialAttributeList[5] += increaseBy;
+  std::vector<unsigned char>::iterator locationOfLength =
+      locationOfSequence + 1;
+  IncreaseLength4Bytes(locationOfLength, increaseBy, &err);
+
+  goIntoTag(locationOfSequence, &err);
+  // go into sequence
   if (err != 0)
     return -1;
   skipTags(locationOfSequence, 1, &err); // skip string messageID
@@ -248,6 +256,13 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   //     (locationOfSequence)[8 + attributeDescriptionLength + i] =
   //         attributeValue[i];
   //   }
+
+  // print partialAttributeList hex values
+  printf("partialAttributeList: ");
+  for (int i = 0; i < partialAttributeList.size(); i++) {
+    printf("%02x ", partialAttributeList[i]);
+    fflush(stdout);
+  }
 
   return 0;
 }
@@ -328,7 +343,7 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
   envelope[0] = BER_SEQUENCE_C;
   envelope[1] = 0x0c; // length of sequence
   // message ID
-  envelope[2] = 0x02;             // todo support bigger message ID
+  envelope[2] = 0x02;                 // todo support bigger message ID
   envelope[3] = messageIDlocation[1]; // length of message ID
   envelope[4] = messageIDlocation[2]; // message ID
 
@@ -498,6 +513,7 @@ bool andSolver(unsigned char *filter) {}
 
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
                          int comm_socket) {
+  int err = 0;
   // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17
   // 30 42 02 01 02 63 3d 04 00 0a 01 02 0a 01 00 02 01 00 02 01 00 01 01 00
   // a0 20  a3 0d 04 03 75 69 64 04 06 72 69 65 6d 61 6e a3 0f 04 03 75 69
@@ -520,23 +536,24 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   sr.sizeLimit = 0;
   sr.attributes.cn = false;
   sr.attributes.email = false;
+  int envelopeLength = ParseLength(searchRequest.begin() + 1, &err) +
+                       2; // lenght of envelope TODO: support longform
 
-  int envelopeLength = searchRequest[1] + 2; // lenght of envelope TODO: support
-                                             // longform
+  // longform
+  std::vector<unsigned char>::iterator envelopePointer = searchRequest.begin();
 
+  goIntoTag(envelopePointer, &err);
   // 3: sequenc, searchRequest[4] lenght of string, 1: string tag
   int skipLength = 2; // skip envelope tag and lenght
   // set message ID
-  sr.messageIDLength = searchRequest[skipLength + 1];
+  sr.messageIDLength = ParseLength(searchRequest.begin() + 1, &err);
   // sr.messageID = (char *)malloc(sr.messageIDLength);
   // memcpy(sr.messageID, &searchRequest[0] + skipLength, sr.messageIDLength
   // + 2);
   for (int i = 0; i < sr.messageIDLength + 2; i++) {
-    sr.messageID->push_back(searchRequest[2 + i]);
+    sr.messageID->push_back(envelopePointer[i]);
   }
-  std::vector<unsigned char>::iterator envelopePointer = searchRequest.begin();
-  int err = 0;
-  goIntoTag(envelopePointer, &err);
+
   skipTags(envelopePointer, 1, &err); // skip message ID
   goIntoTag(envelopePointer, &err);   // go into application 3
   skipTags(envelopePointer, 1, &err); // skip base object
