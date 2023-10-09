@@ -23,7 +23,7 @@ std::vector<database_object> databaseController::loadAllRows() {
 std::vector<unsigned char> databaseController::sanitaze(std::vector<unsigned char> input) {
   std::vector<unsigned char> result;
   //allow only printable ascii charactes and numbers
-    for (int i = 0; i < input.size(); i++) {
+    for (unsigned long int i = 0; i < input.size(); i++) {
         if (input[i] >= 32 && input[i] <= 126) {
         result.push_back(input[i]);
         }
@@ -54,9 +54,9 @@ database_object databaseController::loadNextRow() {
 
 std::vector<database_object> removeDuplicates(std::vector<database_object> input) {
   std::vector<database_object> result;
-  for (int i = 0; i < input.size(); i++) {
+  for (unsigned long int i = 0; i < input.size(); i++) {
     bool found = false;
-    for (int j = 0; j < result.size(); j++) {
+    for (unsigned long int j = 0; j < result.size(); j++) {
       if (input[i].get_uid() == result[j].get_uid()) {
         found = true;
         break;

@@ -64,7 +64,7 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   // print partialAttributeList hex values
 
   printf("partialAttributeList: ");
-  for (int i = 0; i < partialAttributeList.size(); i++) {
+  for (unsigned long int i = 0; i < partialAttributeList.size(); i++) {
     printf("%02x ", partialAttributeList[i]);
   }
 
@@ -96,19 +96,19 @@ filterHandler(filter *f, int *err, std::vector<database_object> &database) {
     assertionValue = emf->getAssertionValue();
 
     if (attributeDescription == cn) {
-      for (int i = 0; i < database.size(); i++) {
+      for (unsigned long int i = 0; i < database.size(); i++) {
         if (database[i].get_name() == assertionValue) {
           localDB.push_back(database[i]);
         }
       }
     } else if (attributeDescription == email) {
-      for (int i = 0; i < database.size(); i++) {
+      for (unsigned long int i = 0; i < database.size(); i++) {
         if (database[i].get_email() == assertionValue) {
           localDB.push_back(database[i]);
         }
       }
     } else if (attributeDescription == uid) {
-      for (int i = 0; i < database.size(); i++) {
+      for (unsigned long int i = 0; i < database.size(); i++) {
         if (database[i].get_uid() == assertionValue) {
           localDB.push_back(database[i]);
         }
@@ -121,14 +121,14 @@ filterHandler(filter *f, int *err, std::vector<database_object> &database) {
   case AND:
     af = (andFilter *)f;
     localDB = filterHandler(af->filters[0], err, database);
-    for (int i = 1; i < af->filters.size(); i++) {
+    for (unsigned long int i = 1; i < af->filters.size(); i++) {
       localDB = filterHandler(af->filters[i], err, localDB);
     }
 
     break;
   case OR:
     of = (orFilter *)f;
-    for (int i = 0; i < of->filters.size(); i++) {
+    for (unsigned long int i = 0; i < of->filters.size(); i++) {
       std::vector<database_object> tmpDB =
           filterHandler(of->filters[i], err, database);
       localDB.insert(localDB.end(), tmpDB.begin(), tmpDB.end());
@@ -259,7 +259,7 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 
   // print partialAttributeList hex values
   printf("partialAttributeList: ");
-  for (int i = 0; i < partialAttributeList.size(); i++) {
+  for (unsigned long int i = 0; i < partialAttributeList.size(); i++) {
     printf("%02x ", partialAttributeList[i]);
     fflush(stdout);
   }
@@ -306,29 +306,36 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   return bindResponse.size();
 }
 
-int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket) {
-
-  // 30 07 02 01 01 64 02 04 00
-  char envelope[30];
-  // sequence
-  envelope[0] = BER_SEQUENCE_C;
-  envelope[1] = 0x07; // length of sequence
-  // message ID
-  envelope[2] = 0x02;             // todo support bigger message ID
-  envelope[3] = searchRequest[3]; // length of message ID
-  envelope[4] = searchRequest[4]; // message ID
-
-  // copies messageID to bind response
-  // _____________________________________________________________
+int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
+                        std::vector<unsigned char> &target) {
+  target.push_back(messageID[0]); // copy tag TODO longform
+  target.push_back(messageID[1]); // copy length
   int x = 0;
-  if (1 < searchRequest[3]) {
+  if (1 < messageID[1]) {
     x = 1;
-    for (; x < searchRequest[3]; x++) {
-      envelope[4 + x] = searchRequest[4 + x];
+    for (; x < messageID[1]; x++) {
+      target.push_back(messageID[2 + x]);
     }
-  } // extends length of sequence by length of message ID
-  //_____________________________________________________________________________________________
-  return 0;
+  } else {
+    target.push_back(messageID[2]);
+  }
+  return x;
+}
+
+int copyMessageID(std::vector<unsigned char>::iterator messageID,
+                  std::vector<unsigned char> &target) {
+  target[0] = messageID[0]; // copy tag
+  target[1] = messageID[1]; // copy length TODO longform
+  int x = 0;
+  if (1 < messageID[1]) {
+    x = 1;
+    for (; x < messageID[1]; x++) {
+      target[2 + x] = messageID[2 + x];
+    }
+  } else {
+    target[2] = messageID[2];
+  }
+  return x;
 }
 
 int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
@@ -338,74 +345,57 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
       searchRequest.begin();
   goIntoTag(messageIDlocation, &err);
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
-  char envelope[30];
-  // sequence
-  envelope[0] = BER_SEQUENCE_C;
-  envelope[1] = 0x0c; // length of sequence
+  std::vector<unsigned char> envelope;
+  // char envelope[30];
+  //  sequence
+  envelope.push_back(BER_SEQUENCE_C);
+  envelope.push_back(0x0c); // length of sequence
+                            // message ID
+
+  int x = copyMessageIDappend(messageIDlocation, envelope);
+  // envelope.push_back(0x02);                 // todo support bigger message ID
+  // envelope.push_back(messageIDlocation[1]); // length of message ID
   // message ID
-  envelope[2] = 0x02;                 // todo support bigger message ID
-  envelope[3] = messageIDlocation[1]; // length of message ID
-  envelope[4] = messageIDlocation[2]; // message ID
 
   // copies messageID to bind response
   // _____________________________________________________________
-  int x = 0;
-  if (1 < messageIDlocation[1]) {
-    x = 1;
-    for (; x < searchRequest[1]; x++) {
-      envelope[2 + x] = searchRequest[2 + x];
-    }
-  } // extends length of sequence by length of message ID
+  //   int x = 0;
+  //   if (1 < messageIDlocation[1]) {
+  //     x = 1;
+  //     for (; x < searchRequest[1]; x++) {
+  //       envelope.push_back(searchRequest[2 + x]);
+  //     }
+  //   } else {
+  //     envelope.push_back(messageIDlocation[2]);
+  //   }
+  // extends length of sequence by length of message ID
   //_____________________________________________________________________________________________
 
   // 30 0e 02 01 02 65 09 30 07 0a 01 00 04 00 04 00
   // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
 
-  envelope[5 + x] = BER_SEARCH_RESULT_DONE_C;
-  envelope[6 + x] = 0x07;
+  envelope.push_back(BER_SEARCH_RESULT_DONE_C);
+  envelope.push_back(0x07);
 
-  envelope[7 + x] = BER_ENUM_C;
-  envelope[8 + x] = 0x01;
-  envelope[9 + x] = BER_LDAP_SUCCESS;
-  envelope[10 + x] = BER_OCTET_STRING_C;
-  envelope[11 + x] = 0x00;
-  envelope[12 + x] = BER_OCTET_STRING_C;
-  envelope[13 + x] = 0x00;
+  envelope.push_back(BER_ENUM_C);
+  envelope.push_back(0x01);
+  envelope.push_back(BER_LDAP_SUCCESS);
+  envelope.push_back(BER_OCTET_STRING_C);
+  envelope.push_back(0x00);
+  envelope.push_back(BER_OCTET_STRING_C);
+  envelope.push_back(0x00);
 
-  // print envelope hex values
-  printf("envelope: ");
-  for (int i = 0; i < 14 + x; i++) {
-    printf("%02x ", envelope[i]);
-  }
+  //   // print envelope hex values
+  //   printf("envelope: ");
+  //   for (int i = 0; i < 14 + x; i++) {
+  //     printf("%02x ", envelope[i]);
+  //   }
 
-  send(comm_socket, envelope, 14 + x, 0);
+  send(comm_socket, &envelope[0], 14 + x, 0);
 
   return 1;
 }
 
-int addLDAPDN(unsigned char **searchRequest, unsigned char *LDAPDN,
-              int LDAPDNLength) {
-
-  int increaseTo = LDAPDNLength + (*searchRequest)[1] + 2;
-  unsigned char *newsearchRequest =
-      (unsigned char *)realloc((*searchRequest), increaseTo);
-  // error checking
-  if (newsearchRequest == NULL) {
-    return -1;
-  }
-  (*searchRequest) = newsearchRequest;
-
-  (*searchRequest)[1] += LDAPDNLength;
-  int messageIDlenght = (*searchRequest)[3];
-
-  (*searchRequest)[6 + messageIDlenght] += LDAPDNLength;
-  (*searchRequest)[8 + messageIDlenght] = LDAPDNLength;
-
-  // copy ldapdn to search request
-  for (int i = 0; i < LDAPDNLength; i++) {
-    (*searchRequest)[9 + messageIDlenght + i] = LDAPDN[i];
-  }
-}
 
 filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
 
@@ -413,8 +403,6 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
   int err;
   int lenght = 0;
   int ll = 0;
-  int attributeDescriptionLenght;
-  int assertionValueLenght;
   std::vector<unsigned char> attributeDescription;
   std::vector<unsigned char> assertionValue;
 
@@ -496,20 +484,17 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
     break;
   }
   // print values
-  for (int i = 0; i < attributeDescription.size(); i++) {
+  for (unsigned long int i = 0; i < attributeDescription.size(); i++) {
     printf("%c", attributeDescription[i]);
   }
   printf("\n");
-  for (int i = 0; i < assertionValue.size(); i++) {
+  for (unsigned long int i = 0; i < assertionValue.size(); i++) {
     printf("%c", assertionValue[i]);
   }
 
   return f;
 }
 
-bool equalityMatchHSolver(unsigned char *filter) {}
-
-bool andSolver(unsigned char *filter) {}
 
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
                          int comm_socket) {
@@ -536,8 +521,14 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   sr.sizeLimit = 0;
   sr.attributes.cn = false;
   sr.attributes.email = false;
-  int envelopeLength = ParseLength(searchRequest.begin() + 1, &err) +
-                       2; // lenght of envelope TODO: support longform
+  sr.attributes.uid = false;
+
+  // cn
+  std::vector<unsigned char> cn = {'c', 'n'};
+  // email
+  std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+  // uid
+  std::vector<unsigned char> uid = {'u', 'i', 'd'};
 
   // longform
   std::vector<unsigned char>::iterator envelopePointer = searchRequest.begin();
@@ -586,8 +577,6 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
   // print types of filters and their values
   printf("filter type: %d\n", f->getFilterType());
-
-  andFilter *af = (andFilter *)f;
 
   std::vector<database_object> database;
   databaseController db("ldap-lidi-ascii.csv");
@@ -644,7 +633,7 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
   skipLength = 0;
 
-  for (; skipLength < attributesLength;) {
+  for (; skipLength < attributesLength;) {//TODO rework, doesnt work at all
 
     // get attribute description
     int atrributeLength = 0;
@@ -654,35 +643,39 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
     }
     attributeDescription[atrributeLength + 1] = 0;
 
-    if (strcmp(attributeDescription, "cn") == 0) {
+    if (strcmp(attributeDescription, "cn") ==
+        0) { // TODO check if it works with non strings
       sr.attributes.cn = true;
     }
     if (strcmp(attributeDescription, "email") == 0) {
       sr.attributes.email = true;
     }
+    if (strcmp(attributeDescription, "uid") == 0) {
+      sr.attributes.uid = true;
+    }
     skipLength += 2 + atrributeLength;
   }
 
-  // cn
-  std::vector<unsigned char> cn = {'c', 'n'};
-  // email
-  std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
-  // uid
-  std::vector<unsigned char> uid = {'u', 'i', 'd'};
-
-  for (int i = 0; i < result.size(); i++) {
+  for (unsigned long int i = 0; i < result.size(); i++) {
     std::vector<unsigned char> searchResultEntry;
     InitSearchResultEntry(searchResultEntry, *(sr.messageID),
                           result[i].get_uid(), result[i].get_uid().size());
     std::vector<unsigned char> resCN = result[i].get_name();
     std::vector<unsigned char> resEmail = result[i].get_email();
     std::vector<unsigned char> resUID = result[i].get_uid();
-    AddToSearchResultEntry(searchResultEntry, cn, 2, resCN,
-                           result[i].get_name().size());
-    AddToSearchResultEntry(searchResultEntry, email, 5, resEmail,
-                           result[i].get_email().size());
-    AddToSearchResultEntry(searchResultEntry, uid, 3, resUID,
-                           result[i].get_uid().size());
+
+    if (sr.attributes.cn|| true /*TODO true is for testing only*/) {
+      AddToSearchResultEntry(searchResultEntry, cn, 2, resCN,
+                             result[i].get_name().size());
+    }
+    if (sr.attributes.email|| true /*TODO true is for testing only*/) {
+      AddToSearchResultEntry(searchResultEntry, email, 5, resEmail,
+                             result[i].get_email().size());
+    }
+    if (sr.attributes.uid || true /*TODO true is for testing only*/) {
+      AddToSearchResultEntry(searchResultEntry, uid, 3, resUID,
+                             result[i].get_uid().size());
+    }
     send(comm_socket, &searchResultEntry[0], searchResultEntry.size(), 0);
   }
 
@@ -744,7 +737,6 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
 
     resNow += recv(comm_socket, buff + resNow, 1024, 0);
     if (resNow >= 2) {
-      int TODOtestval = buff[1] & 0x7F;
       if ((buff[1] < 0x80) ||
           (buff[1] & 0x7F) <= resNow) { // checks if bytes containing lenght of
         // message are complete

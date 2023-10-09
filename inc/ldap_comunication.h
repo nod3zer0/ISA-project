@@ -20,6 +20,7 @@
 typedef struct searchedAttributes {
   bool cn;
   bool email;
+  bool uid;
 } searchedAttributesType;
 
 // enum for attributes (cn, email, uid)
