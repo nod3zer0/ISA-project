@@ -40,56 +40,42 @@ filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
 //  * @param s start of the integer in char array
 //  * @return int - parsed integer
 //  */
-// int ParseINT(unsigned char *s, int *err, int *length) {
-//   int value = 0;
-//   if (s[1] > 4) {
-//     return 0;
-//     (*err) = 2;
-//   }
+unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err) {
+  unsigned int value = 0;
+  int length = ParseLength(s + 1, err);
+  int lengthLength = getLengthLength(s + 1, err);
+  if (length > 4) {
+    return 0;
+    *err = 2;
+  }
 
-//   int dataLength = ParseLength(s + 1, err);
-//   if (*err != 0) {
-//     (*err) = 1;
-//     return 0;
-//   }
-//   int lengthLength = getLengthLength(s + 1, err);
-//   if (*err != 0) {
-//     (*err) = 1;
-//     return 0;
-//   }
+  switch (length) {
+  case 0:
+    value = 0;
+    *err = 1;
+    break;
+  case 1:
+    value = s[1+ lengthLength];
+    err = 0;
+    break;
+  case 2:
+    value = s[1+ lengthLength] << 8 | s[2+ lengthLength];
+    err = 0;
+    break;
+  case 3:
+    value = s[1+ lengthLength] << 16 | s[2+ lengthLength] << 8 | s[3+ lengthLength];
+    err = 0;
+    break;
+  case 4:
+    value = s[1+ lengthLength] << 24 | s[2+ lengthLength] << 16 | s[3+ lengthLength] << 8 | s[4+ lengthLength];
+    err = 0;
+    break;
 
-//   (*length) = dataLength + 1 + lengthLength;
-
-//   switch (dataLength) {
-//   case 0x00:
-//     value = 0;
-//     (*err) = 1;
-//     break;
-//   case 0x01:
-//     value = s[1 + lengthLength];
-//     (*err) = 0;
-//     break;
-//   case 0x02:
-//     value = s[1 + lengthLength] << 8 | s[2 + lengthLength];
-//     (*err) = 0;
-//     break;
-//   case 0x03:
-//     value = s[1 + lengthLength] << 16 | s[2 + lengthLength] << 8 |
-//             s[3 + lengthLength];
-//     (*err) = 0;
-//     break;
-//   case 0x04:
-//     value = s[1 + lengthLength] << 24 | s[2 + lengthLength] << 16 |
-//             s[3 + lengthLength] << 8 | s[4 + lengthLength];
-//     (*err) = 0;
-//     break;
-
-//   default:
-//     (*err) = 2;
-//     break;
-//   }
-//   return value;
-// }
+  default:
+    break;
+  }
+  return value;
+}
 
 // /**
 //  * @brief writes int in BER LDAP format to char array

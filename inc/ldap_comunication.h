@@ -41,7 +41,7 @@ typedef enum { cn, email, uid } atributeDescriptions;
 typedef struct searchRequest {
   std::vector<unsigned char> *messageID;
   int messageIDLength;
-  int sizeLimit;
+  unsigned int sizeLimit;
   searchedAttributesType attributes;
 } searchRequestType;
 
@@ -68,5 +68,6 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 
-
+int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
+                        std::vector<unsigned char> &target);
 #endif

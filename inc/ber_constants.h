@@ -16,4 +16,5 @@ const unsigned int BER_SET_C = 0x31;
 //constants --- result codes
 
 const unsigned int BER_LDAP_SUCCESS = 0x00;
+const unsigned int BER_LDAP_SIZE_LIMIT_EXCEEDED = 0x04;
 #endif

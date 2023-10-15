@@ -30,6 +30,8 @@ int writeInt(unsigned char *s, int value);
 
 int ParseLength(std::vector<unsigned char>::iterator start, int *err);
 
+unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err);
+
 int getLengthLength(std::vector<unsigned char>::iterator start, int *err);
 
 void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err);
