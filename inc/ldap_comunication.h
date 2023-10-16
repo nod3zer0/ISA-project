@@ -16,6 +16,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <algorithm>
 
 typedef struct searchedAttributes {
   bool cn;

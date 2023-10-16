@@ -137,8 +137,15 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
   return true;
 }
 
-std::vector<database_object>
-filterHandler(filter *f, int *err, std::vector<database_object> &database) {
+bool equalityMatchHandler(equalityMatchFilter *emf, int *err,
+                          std::vector<unsigned char> attribute) {
+  if (emf->getAssertionValue() == attribute) {
+    return true;
+  }
+  return false;
+}
+
+bool filterLine(filter *f, int *err, database_object &databaseEntry) {
 
   // cn
   std::vector<unsigned char> cn = {'c', 'n'};
@@ -147,100 +154,119 @@ filterHandler(filter *f, int *err, std::vector<database_object> &database) {
   // uid
   std::vector<unsigned char> uid = {'u', 'i', 'd'};
 
-  std::vector<unsigned char> attributeDescription;
-  std::vector<unsigned char> assertionValue;
-
-  equalityMatchFilter *emf;
-  andFilter *af;
-  orFilter *of;
-
-  std::vector<database_object> localDB;
   switch (f->getFilterType()) {
-  case equalityMatch:
-    emf = (equalityMatchFilter *)f;
-    attributeDescription = emf->getAttributeDescription();
-    assertionValue = emf->getAssertionValue();
-
+  case equalityMatch: {
+    std::vector<unsigned char> attributeDescription =
+        ((equalityMatchFilter *)f)->getAttributeDescription();
     if (attributeDescription == cn) {
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (database[i].get_name() == assertionValue) {
-          localDB.push_back(database[i]);
-        }
-      }
+      return equalityMatchHandler((equalityMatchFilter *)f, err,
+                                  databaseEntry.get_name());
     } else if (attributeDescription == email) {
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (database[i].get_email() == assertionValue) {
-          localDB.push_back(database[i]);
-        }
-      }
+      return equalityMatchHandler((equalityMatchFilter *)f, err,
+                                  databaseEntry.get_email());
     } else if (attributeDescription == uid) {
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (database[i].get_uid() == assertionValue) {
-          localDB.push_back(database[i]);
-        }
-      }
-    }
-    break;
-  case substrings: {
-    SubstringFilter *sf = (SubstringFilter *)f;
-
-    attributeDescription = sf->getAttributeDescription();
-    std::vector<unsigned char> initial = sf->getSubInitial();
-    std::vector<std::vector<unsigned char>> any = sf->getSubAny();
-    std::vector<unsigned char> final = sf->getSubFinal();
-
-    if (attributeDescription == cn) {
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (substrFilterHandler(sf, err, database[i].get_name())) {
-          localDB.push_back(database[i]);
-        }
-      }
-
-    } else if (attributeDescription == email) {
-
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (substrFilterHandler(sf, err, database[i].get_email())) {
-          localDB.push_back(database[i]);
-        }
-      }
-
-    } else if (attributeDescription == uid) {
-      for (unsigned long int i = 0; i < database.size(); i++) {
-        if (substrFilterHandler(sf, err, database[i].get_uid())) {
-          localDB.push_back(database[i]);
-        }
-      }
+      return equalityMatchHandler((equalityMatchFilter *)f, err,
+                                  databaseEntry.get_uid());
     }
 
   } break;
-  case AND:
-    af = (andFilter *)f;
-    localDB = filterHandler(af->filters[0], err, database);
-    for (unsigned long int i = 1; i < af->filters.size(); i++) {
-      localDB = filterHandler(af->filters[i], err, localDB);
+  case substrings: {
+    std::vector<unsigned char> attributeDescription =
+        ((SubstringFilter *)f)->getAttributeDescription();
+    if (attributeDescription == cn) {
+      return substrFilterHandler((SubstringFilter *)f, err,
+                                 databaseEntry.get_name());
+    } else if (attributeDescription == email) {
+      return substrFilterHandler((SubstringFilter *)f, err,
+                                 databaseEntry.get_email());
+    } else if (attributeDescription == uid) {
+      return substrFilterHandler((SubstringFilter *)f, err,
+                                 databaseEntry.get_uid());
     }
+  } break;
+  case AND: {
+    andFilter *af = (andFilter *)f;
+    for (unsigned long int i = 0; i < af->filters.size(); i++) {
+      if (!filterLine(af->filters[i], err, databaseEntry)) {
+        return false;
+      }
+    }
+    return true;
 
-    break;
-  case OR:
-    of = (orFilter *)f;
+  } break;
+  case OR: {
+    orFilter *of = (orFilter *)f;
     for (unsigned long int i = 0; i < of->filters.size(); i++) {
-      std::vector<database_object> tmpDB =
-          filterHandler(of->filters[i], err, database);
-      localDB.insert(localDB.end(), tmpDB.begin(), tmpDB.end());
+      if (filterLine(of->filters[i], err, databaseEntry)) {
+        return true;
+      }
     }
-
-    break;
-  case NOT:
-    // TODO
-    break;
-  case undefined:
-    localDB = database;
-    break;
+    return false;
+  } break;
+  case NOT: {
+    notFilter *nf = (notFilter *)f;
+    return !filterLine((nf->filter), err, databaseEntry);
+  } break;
   default:
-    break;
+    return false;
+  }
+  return false;
+}
+
+std::vector<database_object>
+filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
+
+  std::vector<database_object> resultDB;
+  int dbErr = 0;
+  databaseController db(dbLocation);
+  int lineCounter = 0;
+  if (f->getFilterType() == undefined) {
+    while (true) {
+
+      database_object obj = db.loadNextRow(&dbErr);
+
+      if (dbErr != 0)
+        break;
+      resultDB.push_back(obj);
+      lineCounter++;
+      if (lineCounter >= sizeLimit && sizeLimit != 0) {
+        *err = 1;
+        break;
+      }
+    }
+  } else {
+
+    while (true) {
+
+      database_object obj = db.loadNextRow(&dbErr);
+
+      if (dbErr != 0)
+        break;
+
+      if (filterLine(f, err, obj)) {
+        resultDB.push_back(obj);
+        lineCounter++;
+      }
+
+      if (lineCounter >= sizeLimit && sizeLimit != 0) {
+        *err = 1;
+        break;
+      }
+    }
   }
 
-  return localDB;
+  // for (unsigned long int i = 0; i < database.size(); i++) {
+  // if (filterLine(f, err, database[i])) {
+  //   resultDB.push_back(database[i]);
+  // }
+  //   }
+
+  //   for (unsigned long int i = 0; i < database.size(); i++) {
+  //     if (filterLine(f, err, database[i])) {
+  //       resultDB.push_back(database[i]);
+  //     }
+  //   }
+  return resultDB;
 }
 
 int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
@@ -253,28 +279,6 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   int numberOfNewLengths = 4;
   int increaseBy = numberOfNewTags + numberOfNewLengths + attributeValueLength +
                    attributeDescriptionLength;
-
-  //   unsigned char *newPartialAttributeList = (unsigned char *)realloc(
-  //       (*partialAttributeList),
-  //       increaseBy + ParseLength((*partialAttributeList) + 1, &err) +
-  //           2); // todo: support longform
-  //   // error checking
-  //   if (newPartialAttributeList == NULL) {
-  //     return -1;
-  //   }
-  //   (*partialAttributeList) = newPartialAttributeList;
-
-  // Sequence
-  //      string messageID
-  //      application 4 (searchResultEntry)
-  //          string LDAPDN
-  //          sequence partialAttributeList
-  //              sequence
-  //                  string attributeDescription
-  //                  set
-  //                      string attributeValue
-
-  // IncreaseLength4Bytes(partialAttributeList.begin() + 1, increaseBy, &err);
 
   // increase length of sequence
 
@@ -329,31 +333,6 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   for (int i = 0; i < attributeValueLength; i++) {
     partialAttributeList.push_back(attributeValue[i]);
   }
-
-  // create sequence at the end
-
-  //   (locationOfSequence)[0] = BER_SEQUENCE_C;
-  //   (locationOfSequence)[1] = increaseBy - 2;
-
-  //   // add attribute description
-  //   (locationOfSequence)[2] = BER_OCTET_STRING_C;         // octet string
-  //   (locationOfSequence)[3] = attributeDescriptionLength; // length of
-  //   string for (int i = 0; i < attributeDescriptionLength; i++) {
-  //     (locationOfSequence)[4 + i] = attributeDescription[i];
-  //   }
-
-  //   (locationOfSequence)[4 + attributeDescriptionLength] = BER_SET_C; //
-  //   set A0 (locationOfSequence)[5 + attributeDescriptionLength] =
-  //       attributeValueLength + 2; // length of sequence
-  //   // add attribute value
-  //   (locationOfSequence)[6 + attributeDescriptionLength] =
-  //       BER_OCTET_STRING_C; // octet string
-  //   (locationOfSequence)[7 + attributeDescriptionLength] =
-  //       attributeValueLength; // length of string
-  //   for (int i = 0; i < attributeValueLength; i++) {
-  //     (locationOfSequence)[8 + attributeDescriptionLength + i] =
-  //         attributeValue[i];
-  //   }
 
   // print partialAttributeList hex values
   printf("partialAttributeList: ");
@@ -629,9 +608,16 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
     }
 
     break;
-  case NOT:
-    // TODO
+  case NOT: {
+    f = new notFilter();
+    lenght = ParseLength(BERfilter + 1, &err);
+    goIntoTag(BERfilter, &err);
+    if (err != 0)
+      return new filter();
+    filter *tmpF = convertToFilterObject(BERfilter);
+    ((notFilter *)f)->filter = tmpF;
     break;
+  }
   default:
     f = new filter();
     break;
@@ -713,22 +699,14 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
   printf("filter type: %d\n", f->getFilterType());
 
-  std::vector<database_object> database;
-  databaseController db("ldap-lidi-ascii.csv");
-
-  database = db.loadAllRows();
-
   int errr = 0;
   std::vector<database_object> result;
-  result = filterHandler(f, &errr, database);
+  result = filterHandler(f, &errr, "ldap-lidi-ascii.csv", sr.sizeLimit);
 
   result = removeDuplicates(result);
-
-  if (result.size() > sr.sizeLimit && sr.sizeLimit != 0) {
-    // TODO: send error message
-    sendSearchResultDone(searchRequest, comm_socket,
-                         BER_LDAP_SIZE_LIMIT_EXCEEDED);
-    return 0;
+  bool sizeLimitExceeded = false;
+  if (errr == 1) {
+    sizeLimitExceeded = true;
   }
 
   std::vector<unsigned char>::iterator attributesPointer = envelopePointer;
@@ -784,8 +762,12 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
     }
     send(comm_socket, &searchResultEntry[0], searchResultEntry.size(), 0);
   }
-
-  sendSearchResultDone(searchRequest, comm_socket, BER_LDAP_SUCCESS);
+  if (sizeLimitExceeded) {
+    sendSearchResultDone(searchRequest, comm_socket,
+                         BER_LDAP_SIZE_LIMIT_EXCEEDED);
+  } else {
+    sendSearchResultDone(searchRequest, comm_socket, BER_LDAP_SUCCESS);
+  }
   return 0;
 }
 

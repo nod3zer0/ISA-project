@@ -27,7 +27,7 @@ private:
   std::vector<unsigned char> sanitaze(std::vector<unsigned char> input);
 
 public:
-  database_object loadNextRow();
+  database_object loadNextRow(int* err);
   std::vector<database_object> loadAllRows();
 
   databaseController(std::string fileName);

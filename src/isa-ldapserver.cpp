@@ -159,7 +159,7 @@ int main(int argc, const char *argv[]) {
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
-  sa.sin6_port = htons(10017);
+  sa.sin6_port = htons(10018);
   if ((rc = bind(welcome_socket, (struct sockaddr *)&sa, sizeof(sa))) < 0) {
     perror("bind() failed");
     exit(EXIT_FAILURE);

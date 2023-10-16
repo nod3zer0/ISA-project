@@ -14,24 +14,33 @@ database_object::database_object(std::vector<unsigned char> name,
 std::vector<database_object> databaseController::loadAllRows() {
   std::vector<database_object> result;
   while (!file.eof()) {
-    result.push_back(loadNextRow());
+    int err;
+    result.push_back(loadNextRow(&err));
   }
   return result;
 }
 
-
-std::vector<unsigned char> databaseController::sanitaze(std::vector<unsigned char> input) {
+std::vector<unsigned char>
+databaseController::sanitaze(std::vector<unsigned char> input) {
   std::vector<unsigned char> result;
-  //allow only printable ascii charactes and numbers
-    for (unsigned long int i = 0; i < input.size(); i++) {
-        if (input[i] >= 32 && input[i] <= 126) {
-        result.push_back(input[i]);
-        }
+  // allow only printable ascii charactes and numbers
+  for (unsigned long int i = 0; i < input.size(); i++) {
+    if (input[i] >= 32 && input[i] <= 126) {
+      result.push_back(input[i]);
     }
+  }
   return result;
 }
 
-database_object databaseController::loadNextRow() {
+database_object databaseController::loadNextRow(int *err) {
+
+  if (file.eof()) {
+    *err = 1;
+    return database_object(std::vector<unsigned char>(),
+                           std::vector<unsigned char>(),
+                           std::vector<unsigned char>());
+  }
+
   std::vector<unsigned char> name;
   std::vector<unsigned char> uid;
   std::vector<unsigned char> email;
@@ -43,16 +52,20 @@ database_object databaseController::loadNextRow() {
   std::string token;
   std::getline(ss, token, ';');
 
-  name = databaseController::sanitaze(std::vector<unsigned char>(token.begin(), token.end()));
+  name = databaseController::sanitaze(
+      std::vector<unsigned char>(token.begin(), token.end()));
   std::getline(ss, token, ';');
-  uid = databaseController::sanitaze(std::vector<unsigned char>(token.begin(), token.end()));
+  uid = databaseController::sanitaze(
+      std::vector<unsigned char>(token.begin(), token.end()));
   std::getline(ss, token, ';');
-  email = databaseController::sanitaze(std::vector<unsigned char>(token.begin(), token.end()));
-
+  email = databaseController::sanitaze(
+      std::vector<unsigned char>(token.begin(), token.end()));
+  *err = 0;
   return database_object(name, uid, email);
 }
 
-std::vector<database_object> removeDuplicates(std::vector<database_object> input) {
+std::vector<database_object>
+removeDuplicates(std::vector<database_object> input) {
   std::vector<database_object> result;
   for (unsigned long int i = 0; i < input.size(); i++) {
     bool found = false;

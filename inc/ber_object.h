@@ -23,7 +23,7 @@ public:
 
 class notFilter : public filter {
 public:
-  filter filter;
+  filter *filter;
   filterTypes getFilterType();
 };
 
