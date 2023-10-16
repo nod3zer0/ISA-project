@@ -71,6 +71,72 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   return 0;
 }
 
+bool substrFilterHandler(SubstringFilter *sf, int *err,
+                         std::vector<unsigned char> attribute) {
+  std::vector<unsigned char> attributeInital;
+  std::vector<unsigned char> attributeMiddle;
+  std::vector<unsigned char> attributeFinal;
+
+  // extract initial
+  if (!sf->getSubInitial().empty()) {
+    if (attribute.size() >= sf->getSubInitial().size()) {
+      attributeInital = std::vector<unsigned char>(
+          attribute.begin(), attribute.begin() + sf->getSubInitial().size());
+      attributeMiddle = std::vector<unsigned char>(
+          attribute.begin() + sf->getSubInitial().size(), attribute.end());
+    } else {
+      // TODO err
+    }
+  }
+  // extract final
+  if (!sf->getSubFinal().empty()) {
+    if (attribute.size() >= sf->getSubFinal().size()) {
+      attributeFinal = std::vector<unsigned char>(
+          attribute.end() - sf->getSubFinal().size(), attribute.end());
+      if (attributeMiddle.size() > sf->getSubFinal().size()) {
+        attributeMiddle = std::vector<unsigned char>(
+            attributeMiddle.begin(),
+            attributeMiddle.end() - sf->getSubFinal().size());
+      } else {
+        // TODO err
+      }
+    } else {
+      // TODO err
+    }
+  }
+
+  if (!sf->getSubInitial().empty() && attributeInital != sf->getSubInitial()) {
+    return false;
+  }
+  if (!sf->getSubFinal().empty() && attributeFinal != sf->getSubFinal()) {
+    return false;
+  }
+  unsigned long int x = 0;
+
+  for (unsigned long int y = 0; y < sf->getSubAny().size(); y++) {
+    bool match = false;
+    for (; x < attributeMiddle.size(); x++) {
+
+      if (attributeMiddle[x] == sf->getSubAny()[y][0]) {
+        match = true;
+        for (unsigned long int z = 0; z < sf->getSubAny()[y].size(); z++) {
+          if (attributeMiddle[x + z] != sf->getSubAny()[y][z]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) {
+          break;
+        }
+      }
+    }
+    if (!match) {
+      return false;
+    }
+  }
+  return true;
+}
+
 std::vector<database_object>
 filterHandler(filter *f, int *err, std::vector<database_object> &database) {
 
@@ -115,9 +181,38 @@ filterHandler(filter *f, int *err, std::vector<database_object> &database) {
       }
     }
     break;
-  case substrings:
-    // TODO
-    break;
+  case substrings: {
+    SubstringFilter *sf = (SubstringFilter *)f;
+
+    attributeDescription = sf->getAttributeDescription();
+    std::vector<unsigned char> initial = sf->getSubInitial();
+    std::vector<std::vector<unsigned char>> any = sf->getSubAny();
+    std::vector<unsigned char> final = sf->getSubFinal();
+
+    if (attributeDescription == cn) {
+      for (unsigned long int i = 0; i < database.size(); i++) {
+        if (substrFilterHandler(sf, err, database[i].get_name())) {
+          localDB.push_back(database[i]);
+        }
+      }
+
+    } else if (attributeDescription == email) {
+
+      for (unsigned long int i = 0; i < database.size(); i++) {
+        if (substrFilterHandler(sf, err, database[i].get_email())) {
+          localDB.push_back(database[i]);
+        }
+      }
+
+    } else if (attributeDescription == uid) {
+      for (unsigned long int i = 0; i < database.size(); i++) {
+        if (substrFilterHandler(sf, err, database[i].get_uid())) {
+          localDB.push_back(database[i]);
+        }
+      }
+    }
+
+  } break;
   case AND:
     af = (andFilter *)f;
     localDB = filterHandler(af->filters[0], err, database);
@@ -436,9 +531,64 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
     f = new equalityMatchFilter(attributeDescription, assertionValue);
 
     break;
-  case substrings:
-    // TODO
-    break;
+  case substrings: {
+    // TODO::
+    std::vector<unsigned char> attributeDescription;
+    std::vector<unsigned char> initial;
+    std::vector<std::vector<unsigned char>> any;
+    std::vector<unsigned char> final;
+    goIntoTag(BERfilter, &err);
+    if (err != 0)
+      return new filter();
+    lenght = ParseLength(BERfilter + 1, &err);
+    ll = getLengthLength(BERfilter + 1, &err);
+
+    for (int i = 0; i < lenght; i++) {
+      attributeDescription.push_back(BERfilter[1 + ll + i]);
+    }
+
+    skipTags(BERfilter, 1, &err);
+    if (err != 0)
+      return new filter();
+    int lenghtOfSequence = ParseLength(BERfilter + 1, &err);
+    int lenghtOflenOfSequence = getLengthLength(BERfilter + 1, &err);
+    goIntoTag(BERfilter, &err);
+    if (err != 0)
+      return new filter();
+
+    int currentBitPointer = 0;
+    while (currentBitPointer < lenghtOfSequence + lenghtOflenOfSequence) {
+      switch (BERfilter[0]) {
+      case 0x80: {
+        int dataLenght = ParseLength(BERfilter + 1, &err);
+        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        initial = std::vector<unsigned char>(BERfilter + 1 + LenghtLenght,
+                                             BERfilter + 1 + LenghtLenght +
+                                                 dataLenght);
+      } break;
+      case 0x81: {
+        int dataLenght = ParseLength(BERfilter + 1, &err);
+        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        std::vector<unsigned char> tmp = std::vector<unsigned char>(
+            BERfilter + 1 + LenghtLenght,
+            BERfilter + 1 + LenghtLenght + dataLenght);
+        any.push_back(tmp);
+      } break;
+      case 0x82: {
+        int dataLenght = ParseLength(BERfilter + 1, &err);
+        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        final = std::vector<unsigned char>(BERfilter + 1 + LenghtLenght,
+                                           BERfilter + 1 + LenghtLenght +
+                                               dataLenght);
+      } break;
+      }
+      currentBitPointer += 1 + getLengthLength(BERfilter + 1, &err) +
+                           ParseLength(BERfilter + 1, &err);
+      skipTags(BERfilter, 1, &err);
+    }
+    f = new SubstringFilter(attributeDescription, initial, any, final);
+
+  } break;
   case AND:
     f = new andFilter();
 
@@ -574,9 +724,10 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
   result = removeDuplicates(result);
 
-  if(result.size() > sr.sizeLimit && sr.sizeLimit != 0){
-    //TODO: send error message
-    sendSearchResultDone(searchRequest, comm_socket, BER_LDAP_SIZE_LIMIT_EXCEEDED);
+  if (result.size() > sr.sizeLimit && sr.sizeLimit != 0) {
+    // TODO: send error message
+    sendSearchResultDone(searchRequest, comm_socket,
+                         BER_LDAP_SIZE_LIMIT_EXCEEDED);
     return 0;
   }
 

@@ -2,23 +2,22 @@
 #define BER_OBJECT_H
 #include "inc/ber_helper_functions.h"
 
-
 #include <vector>
 
 class filter {
 public:
-  virtual filterTypes  getFilterType();
+  virtual filterTypes getFilterType();
 };
 
 class andFilter : public filter {
 public:
-  std::vector<filter*> filters;
+  std::vector<filter *> filters;
   filterTypes getFilterType();
 };
 
 class orFilter : public filter {
 public:
-  std::vector<filter*> filters;
+  std::vector<filter *> filters;
   filterTypes getFilterType();
 };
 
@@ -31,17 +30,20 @@ public:
 class SubstringFilter : public filter {
 
 private:
-  std::vector<unsigned char> initial;
-  std::vector<unsigned char> any;
-  std::vector<unsigned char> final;
+  std::vector<unsigned char> attributeDescription;
+  std::vector<unsigned char> subInitial;
+  std::vector<std::vector<unsigned char>> subAny;
+  std::vector<unsigned char> subFinal;
 
 public:
-  SubstringFilter(std::vector<unsigned char> initial,
-                  std::vector<unsigned char> any,
-                  std::vector<unsigned char> final);
-  std::vector<unsigned char> getInitial();
-  std::vector<unsigned char> getAny();
-  std::vector<unsigned char> getFinal();
+  SubstringFilter(std::vector<unsigned char> attributeDescription,
+                  std::vector<unsigned char> subInitial,
+                  std::vector<std::vector<unsigned char>> subAny,
+                  std::vector<unsigned char> subFinal);
+  std::vector<unsigned char> getAttributeDescription();
+  std::vector<unsigned char> getSubInitial();
+  std::vector<std::vector<unsigned char>> getSubAny();
+  std::vector<unsigned char> getSubFinal();
   filterTypes getFilterType();
 };
 
@@ -49,11 +51,12 @@ class equalityMatchFilter : public filter {
 private:
   std::vector<unsigned char> attributeDescription;
   std::vector<unsigned char> assertionValue;
+
 public:
-    equalityMatchFilter(std::vector<unsigned char> attributeDescription,
-                        std::vector<unsigned char> assertionValue);
-    std::vector<unsigned char> getAttributeDescription();
-    std::vector<unsigned char> getAssertionValue();
-    filterTypes getFilterType();
-    };
+  equalityMatchFilter(std::vector<unsigned char> attributeDescription,
+                      std::vector<unsigned char> assertionValue);
+  std::vector<unsigned char> getAttributeDescription();
+  std::vector<unsigned char> getAssertionValue();
+  filterTypes getFilterType();
+};
 #endif

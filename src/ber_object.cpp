@@ -44,18 +44,26 @@ filterTypes orFilter::getFilterType() { return OR; };
 
 filterTypes notFilter::getFilterType() { return NOT; };
 
-
-
-SubstringFilter::SubstringFilter(std::vector<unsigned char> initial,
-                                 std::vector<unsigned char> any,
-                                 std::vector<unsigned char> final) {
-  this->initial = initial;
-  this->any = any;
-  this->final = final;
+SubstringFilter::SubstringFilter(
+    std::vector<unsigned char> attributeDescription,
+    std::vector<unsigned char> subInitial,
+    std::vector<std::vector<unsigned char>> subAny,
+    std::vector<unsigned char> subFinal) {
+  this->attributeDescription = attributeDescription;
+  this->subInitial = subInitial;
+  this->subAny = subAny;
+  this->subFinal = subFinal;
 };
-std::vector<unsigned char> SubstringFilter::getInitial() { return initial; };
-std::vector<unsigned char> SubstringFilter::getAny() { return any; };
-std::vector<unsigned char> SubstringFilter::getFinal() { return final; };
+std::vector<unsigned char> SubstringFilter::getAttributeDescription() {
+  return attributeDescription;
+};
+std::vector<unsigned char> SubstringFilter::getSubInitial() {
+  return subInitial;
+};
+std::vector<std::vector<unsigned char>> SubstringFilter::getSubAny() {
+  return subAny;
+};
+std::vector<unsigned char> SubstringFilter::getSubFinal() { return subFinal; };
 filterTypes SubstringFilter::getFilterType() { return substrings; };
 
 filterTypes filter::getFilterType() { return undefined; };
