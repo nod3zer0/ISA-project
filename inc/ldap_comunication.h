@@ -10,6 +10,7 @@
 #include "inc/SubstringFilterObject.h"
 #include "inc/DatabaseController.h"
 #include "inc/database_helper_functions.h"
+#include "inc/filter_helper_functions.h"
 #include "inc/DatabaseObject.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
