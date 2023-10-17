@@ -68,12 +68,12 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
                            std::vector<unsigned char> &attributeValue,
                            int attributeValueLength);
 int CreateBindResponse(std::vector<unsigned char> &bindRequest,
-                       std::vector<unsigned char> &bindResponse);
+                       std::vector<unsigned char> &bindResponse,int returnCode);
 
 int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
 
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
-                         int comm_socket);
+                         int comm_socket, const char *fileName);
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 

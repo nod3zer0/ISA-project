@@ -11,25 +11,25 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 
   partialAttributeList.push_back(BER_SEQUENCE_C);
   // longform 4 bytes
-  partialAttributeList.push_back(0x84); // length of sequence
+  partialAttributeList.push_back(BER_INT_4BYTES_C); // length of sequence
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
   std::vector<unsigned char>::iterator lengthLocation =
       partialAttributeList.begin() + 1;
-  partialAttributeList.push_back(0x00);
-  partialAttributeList.push_back(0x00);
-  partialAttributeList.push_back(0x00);
-  partialAttributeList.push_back(0x00);
-
   int err = 0;
-  IncreaseLength4Bytes(lengthLocation, LDAPDNLength + 0x09 + 0x04 + 0x04, &err);
+  IncreaseLength4Bytes(lengthLocation, LDAPDNLength + 0x07 + 0x04 + 0x04, &err);
 
   int MsgIdLenght =
       copyMessageIDappend(messageID.begin(), partialAttributeList);
 
+  lengthLocation = partialAttributeList.begin() + 1;
   IncreaseLength4Bytes(lengthLocation, MsgIdLenght,
                        &err); // length of sequence
 
   partialAttributeList.push_back(BER_SEARCH_RESULT_ENTRY_C); // Aplication 4 tag
-  partialAttributeList.push_back(0x84);
+  partialAttributeList.push_back(BER_INT_4BYTES_C);
   lengthLocation =
       partialAttributeList.begin() + partialAttributeList.size() - 1;
 
@@ -50,7 +50,7 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 
   // sequence
   partialAttributeList.push_back(BER_SEQUENCE_C);
-  partialAttributeList.push_back(0x84);
+  partialAttributeList.push_back(BER_INT_4BYTES_C);
   partialAttributeList.push_back(0x00);
   partialAttributeList.push_back(0x00);
   partialAttributeList.push_back(0x00);
@@ -58,8 +58,6 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 
   return 0;
 }
-
-
 
 int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
                            std::vector<unsigned char> &attributeDescription,
@@ -145,11 +143,12 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 /// @param bindResponse
 /// @return length of bind response, -1 if error
 int CreateBindResponse(std::vector<unsigned char> &bindRequest,
-                       std::vector<unsigned char> &bindResponse) {
+                       std::vector<unsigned char> &bindResponse,
+                       int resultCode) {
   // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
   // sequence
   bindResponse.push_back(BER_SEQUENCE_C);
-  bindResponse.push_back(0x84); // length of sequence
+  bindResponse.push_back(BER_INT_4BYTES_C); // length of sequence
   bindResponse.push_back(0x00);
   bindResponse.push_back(0x00);
   bindResponse.push_back(0x00);
@@ -160,7 +159,7 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   int messageIDLenght = copyMessageIDappend(messageIDLocation, bindResponse);
   std::vector<unsigned char>::iterator lengthLocation =
       bindResponse.begin() + 1;
-  IncreaseLength4Bytes(lengthLocation, 0x0c + messageIDLenght, &err);
+  IncreaseLength4Bytes(lengthLocation, 0x0c + messageIDLenght - 2, &err);
 
   // message ID
 
@@ -171,9 +170,9 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   bindResponse.push_back(BER_BIND_RESPONSE_C); // BindResponse tag
   bindResponse.push_back(0x07);                // length of bind response
   // LDAP result
-  bindResponse.push_back(BER_ENUM_C);       // enum
-  bindResponse.push_back(0x01);             // length of enum
-  bindResponse.push_back(BER_LDAP_SUCCESS); // LDAP result code - success (0)
+  bindResponse.push_back(BER_ENUM_C); // enum
+  bindResponse.push_back(0x01);       // length of enum
+  bindResponse.push_back(resultCode); // LDAP result code - success (0)
   // matched DN
   bindResponse.push_back(BER_OCTET_STRING_C); // octet string
   bindResponse.push_back(0x00);               // length of matched DN
@@ -196,7 +195,7 @@ int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
   } else {
     target.push_back(messageID[2]);
   }
-  return x;
+  return x + 2;
 }
 
 int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
@@ -226,16 +225,13 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
   envelope.push_back(BER_OCTET_STRING_C);
   envelope.push_back(0x00); // length
 
-
-  send(comm_socket, &envelope[0], 14 + x, 0);
+  send(comm_socket, &envelope[0], 12 + x, 0);
 
   return 1;
 }
 
-
-
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
-                         int comm_socket) {
+                         int comm_socket, const char *dbPath) {
   int err = 0;
   // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17
   // 30 42 02 01 02 63 3d 04 00 0a 01 02 0a 01 00 02 01 00 02 01 00 01 01 00
@@ -298,7 +294,7 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
 
   int errr = 0;
   std::vector<DatabaseObject> result;
-  result = filterHandler(f, &errr, "ldap-lidi-ascii.csv", sr.sizeLimit);
+  result = filterHandler(f, &errr, dbPath, sr.sizeLimit);
 
   result = removeDuplicates(result);
   bool sizeLimitExceeded = false;
@@ -375,8 +371,11 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
   int resNow = 0;
   int resAll = 0;
   for (;;) { // loads lenght of message
+    int returnCode = recv(comm_socket, buff + resNow, 1024, 0);
+    if (returnCode == 0)
+      return -1;
+    resNow += returnCode;
 
-    resNow += recv(comm_socket, buff + resNow, 1024, 0);
     if (resNow >= 2) {
       if ((buff[1] < 0x80) ||
           (buff[1] & 0x7F) <= resNow) { // checks if bytes containing lenght of
@@ -392,7 +391,10 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
   for (;;) {
     resNow = 0;
     if (resAll < lenghtOfMessage) {
-      resNow += recv(comm_socket, buff, 1024, 0);
+      int returnCode = recv(comm_socket, buff, 1024, 0);
+      if (returnCode == 0)
+        return -1;
+      resNow += returnCode;
       resAll += resNow;
     }
 
