@@ -20,34 +20,26 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   partialAttributeList.push_back(0x00);
 
   int err = 0;
-  IncreaseLength4Bytes(lengthLocation, LDAPDNLength + 0x09,
+  IncreaseLength4Bytes(lengthLocation, LDAPDNLength + 0x09 + 0x04 + 0x04, &err);
+
+  int MsgIdLenght =
+      copyMessageIDappend(messageID.begin(), partialAttributeList);
+
+  IncreaseLength4Bytes(lengthLocation, MsgIdLenght,
                        &err); // length of sequence
 
-  // message ID
-  partialAttributeList.push_back(BER_INT_C);
-  partialAttributeList.push_back(messageID[1]); // length of message ID
-  partialAttributeList.push_back(messageID[0]); // message ID
-  // copies messageID to bind response
-  // _____________________________________________________________
-  //   int x = 0; //TODO: support longform
-  //   if (1 < (*partialAttributeList)[3]) {
-  //     x = 1;
-  //     for (; x < messageID[1]; x++) {
-  //       (*partialAttributeList)[4 + x] = messageID[x];
-  //     }
-  //   } // extends length of sequence by length of message ID
-
-  // (*partialAttributeList)[1] += x;
-  //_____________________________________________________________________________________________
-  // error checking
-  //   if ((*partialAttributeList) == NULL) {
-  //     return -1;
-  //   }
-
   partialAttributeList.push_back(BER_SEARCH_RESULT_ENTRY_C); // Aplication 4 tag
-  partialAttributeList.push_back(0x04 +
-                                 LDAPDNLength); // length of
-                                                // PartialAttributeList LDAPN
+  partialAttributeList.push_back(0x84);
+  lengthLocation =
+      partialAttributeList.begin() + partialAttributeList.size() - 1;
+
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  IncreaseLength4Bytes(lengthLocation, 0x04 + 0x04 + LDAPDNLength, &err);
+  // length of
+  // PartialAttributeList LDAPN
   partialAttributeList.push_back(BER_OCTET_STRING_C); // octet string
   partialAttributeList.push_back(LDAPDNLength);       // length of string
 
@@ -58,15 +50,11 @@ int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
 
   // sequence
   partialAttributeList.push_back(BER_SEQUENCE_C);
+  partialAttributeList.push_back(0x84);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
+  partialAttributeList.push_back(0x00);
   partialAttributeList.push_back(0x00); // length of sequence
-                                        // TODO
-
-  // print partialAttributeList hex values
-
-  printf("partialAttributeList: ");
-  for (unsigned long int i = 0; i < partialAttributeList.size(); i++) {
-    printf("%02x ", partialAttributeList[i]);
-  }
 
   return 0;
 }
@@ -85,7 +73,7 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
       attributeMiddle = std::vector<unsigned char>(
           attribute.begin() + sf->getSubInitial().size(), attribute.end());
     } else {
-      // TODO err
+      return false;
     }
   }
   // extract final
@@ -97,11 +85,9 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
         attributeMiddle = std::vector<unsigned char>(
             attributeMiddle.begin(),
             attributeMiddle.end() - sf->getSubFinal().size());
-      } else {
-        // TODO err
       }
     } else {
-      // TODO err
+      return false;
     }
   }
 
@@ -255,17 +241,6 @@ filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
     }
   }
 
-  // for (unsigned long int i = 0; i < database.size(); i++) {
-  // if (filterLine(f, err, database[i])) {
-  //   resultDB.push_back(database[i]);
-  // }
-  //   }
-
-  //   for (unsigned long int i = 0; i < database.size(); i++) {
-  //     if (filterLine(f, err, database[i])) {
-  //       resultDB.push_back(database[i]);
-  //     }
-  //   }
   return resultDB;
 }
 
@@ -297,8 +272,10 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   skipTags(locationOfSequence, 1, &err); // skip string messageID
   if (err != 0)
     return -1;
-  *(locationOfSequence + 1) += increaseBy; // TODO: longform
-  goIntoTag(locationOfSequence, &err);     // go into application 4
+  std::vector<unsigned char>::iterator locationOfPartialAttributeListLenght =
+      locationOfSequence + 1;
+  IncreaseLength4Bytes(locationOfPartialAttributeListLenght, increaseBy, &err);
+  goIntoTag(locationOfSequence, &err); // go into application 4
   if (err != 0)
     return -1;
   skipTags(locationOfSequence, 1, &err); // skip string LDAPDN
@@ -311,7 +288,9 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
   if (err != 0)
     return -1;
 
-  *(locationOfPartialAttributeList + 1) += increaseBy; // TODO: longform
+  locationOfPartialAttributeListLenght = locationOfPartialAttributeList + 1;
+
+  IncreaseLength4Bytes(locationOfPartialAttributeListLenght, increaseBy, &err);
 
   partialAttributeList.push_back(BER_SEQUENCE_C);
   partialAttributeList.push_back(increaseBy - 2);
@@ -353,16 +332,20 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   // 30 0c 02 01 01 61 07 0a 01 00 04 00 04 00
   // sequence
   bindResponse.push_back(BER_SEQUENCE_C);
-  bindResponse.push_back(0x0c); // length of sequence
+  bindResponse.push_back(0x84); // length of sequence
+  bindResponse.push_back(0x00);
+  bindResponse.push_back(0x00);
+  bindResponse.push_back(0x00);
+  bindResponse.push_back(0x00);
+  int err = 0;
+  std::vector<unsigned char>::iterator messageIDLocation =
+      bindRequest.begin() + 2;
+  int messageIDLenght = copyMessageIDappend(messageIDLocation, bindResponse);
+  std::vector<unsigned char>::iterator lengthLocation =
+      bindResponse.begin() + 1;
+  IncreaseLength4Bytes(lengthLocation, 0x0c + messageIDLenght, &err);
+
   // message ID
-  bindResponse.push_back(BER_INT_C);
-  bindResponse.push_back(bindRequest[3]); // length of message ID
-  // bindResponse.push_back(bindRequest[4]);// message ID
-
-  // copies messageID to bind response
-  // _____________________________________________________________
-
-  bindResponse.push_back(bindRequest[4]); // TODO: support longform
 
   // extends length of sequence by length of message ID
   //_____________________________________________________________________________________________
@@ -399,21 +382,21 @@ int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
   return x;
 }
 
-int copyMessageID(std::vector<unsigned char>::iterator messageID,
-                  std::vector<unsigned char> &target) {
-  target[0] = messageID[0]; // copy tag
-  target[1] = messageID[1]; // copy length TODO longform
-  int x = 0;
-  if (1 < messageID[1]) {
-    x = 1;
-    for (; x < messageID[1]; x++) {
-      target[2 + x] = messageID[2 + x];
-    }
-  } else {
-    target[2] = messageID[2];
-  }
-  return x;
-}
+// int copyMessageID(std::vector<unsigned char>::iterator messageID,
+//                   std::vector<unsigned char> &target) {
+//   target[0] = messageID[0]; // copy tag
+//   target[1] = messageID[1]; // copy length TODO longform
+//   int x = 0;
+//   if (1 < messageID[1]) {
+//     x = 1;
+//     for (; x < messageID[1]; x++) {
+//       target[2 + x] = messageID[2 + x];
+//     }
+//   } else {
+//     target[2] = messageID[2];
+//   }
+//   return x;
+// }
 
 int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
                          int comm_socket, unsigned int result_code) {
@@ -430,26 +413,6 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
                             // message ID
 
   int x = copyMessageIDappend(messageIDlocation, envelope);
-  // envelope.push_back(0x02);                 // todo support bigger message ID
-  // envelope.push_back(messageIDlocation[1]); // length of message ID
-  // message ID
-
-  // copies messageID to bind response
-  // _____________________________________________________________
-  //   int x = 0;
-  //   if (1 < messageIDlocation[1]) {
-  //     x = 1;
-  //     for (; x < searchRequest[1]; x++) {
-  //       envelope.push_back(searchRequest[2 + x]);
-  //     }
-  //   } else {
-  //     envelope.push_back(messageIDlocation[2]);
-  //   }
-  // extends length of sequence by length of message ID
-  //_____________________________________________________________________________________________
-
-  // 30 0e 02 01 02 65 09 30 07 0a 01 00 04 00 04 00
-  // 30 0c 02 01 02 65 07 0a 01 00 04 00 04 00
 
   envelope.push_back(BER_SEARCH_RESULT_DONE_C);
   envelope.push_back(0x07); // length
@@ -462,11 +425,6 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
   envelope.push_back(BER_OCTET_STRING_C);
   envelope.push_back(0x00); // length
 
-  //   // print envelope hex values
-  //   printf("envelope: ");
-  //   for (int i = 0; i < 14 + x; i++) {
-  //     printf("%02x ", envelope[i]);
-  //   }
 
   send(comm_socket, &envelope[0], 14 + x, 0);
 
@@ -511,7 +469,6 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
 
     break;
   case substrings: {
-    // TODO::
     std::vector<unsigned char> attributeDescription;
     std::vector<unsigned char> initial;
     std::vector<std::vector<unsigned char>> any;
@@ -588,7 +545,6 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
       skipTags(BERfilter, 1, &err);
     }
 
-    // TODO
     break;
   case OR:
     f = new orFilter();
@@ -686,9 +642,6 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   skipTags(envelopePointer, 1, &err); // skip base object
   skipTags(envelopePointer, 1, &err); // skip enum scope
   skipTags(envelopePointer, 1, &err); // skip enum derefAliases
-  // sr.sizeLimit = envelopePointer[2]; // set size limit TODO: support int size
-  // limit
-
   sr.sizeLimit = ParseINT(envelopePointer, &err);
   skipTags(envelopePointer, 1, &err); // skip int sizeLimit
   skipTags(envelopePointer, 1, &err); // skip int timeLimit
@@ -801,13 +754,13 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
 
     if (resAll > 0) {
       // check if message is envelope
-      if (buff[0] != 0x30) { // not a sequence //TODO check for bind request
+      if (buff[0] != 0x30) {
         printf("invalid message\n");
         // TODO respond with error message
         break;
       }
       int length = 0;
-      length = buff[1]; // TODO: check if works
+      length = buff[1]; // TODO: longform
 
       bindRequest.insert(bindRequest.end(), buff, buff + resNow);
       // if whole message received, return response
