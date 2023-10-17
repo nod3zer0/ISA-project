@@ -2,8 +2,15 @@
 #define LDAP_COMUNICATION_H
 #include "inc/ber_constants.h"
 #include "inc/ber_helper_functions.h"
-#include "inc/ber_object.h"
-#include "inc/database_object.h"
+#include "inc/FilterObject.h"
+#include "inc/AndFilterObject.h"
+#include "inc/OrFilterObject.h"
+#include "inc/NotFilterObject.h"
+#include "inc/EqualityMatchFilterObject.h"
+#include "inc/SubstringFilterObject.h"
+#include "inc/DatabaseController.h"
+#include "inc/database_helper_functions.h"
+#include "inc/DatabaseObject.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>

@@ -1,7 +1,7 @@
 // #include "inc/ber_helper_functions.h"
-#include "inc/ber_object.h"
-#include "inc/database_object.h"
+#include "inc/DatabaseObject.h"
 #include "inc/ldap_comunication.h"
+#include "inc/FilterObject.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>

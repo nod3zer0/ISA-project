@@ -131,7 +131,7 @@ bool equalityMatchHandler(equalityMatchFilter *emf, int *err,
   return false;
 }
 
-bool filterLine(filter *f, int *err, database_object &databaseEntry) {
+bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
 
   // cn
   std::vector<unsigned char> cn = {'c', 'n'};
@@ -199,17 +199,17 @@ bool filterLine(filter *f, int *err, database_object &databaseEntry) {
   return false;
 }
 
-std::vector<database_object>
+std::vector<DatabaseObject>
 filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
 
-  std::vector<database_object> resultDB;
+  std::vector<DatabaseObject> resultDB;
   int dbErr = 0;
-  databaseController db(dbLocation);
+  DatabaseController db(dbLocation);
   int lineCounter = 0;
   if (f->getFilterType() == undefined) {
     while (true) {
 
-      database_object obj = db.loadNextRow(&dbErr);
+      DatabaseObject obj = db.loadNextRow(&dbErr);
 
       if (dbErr != 0)
         break;
@@ -224,7 +224,7 @@ filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
 
     while (true) {
 
-      database_object obj = db.loadNextRow(&dbErr);
+      DatabaseObject obj = db.loadNextRow(&dbErr);
 
       if (dbErr != 0)
         break;
@@ -381,22 +381,6 @@ int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
   }
   return x;
 }
-
-// int copyMessageID(std::vector<unsigned char>::iterator messageID,
-//                   std::vector<unsigned char> &target) {
-//   target[0] = messageID[0]; // copy tag
-//   target[1] = messageID[1]; // copy length TODO longform
-//   int x = 0;
-//   if (1 < messageID[1]) {
-//     x = 1;
-//     for (; x < messageID[1]; x++) {
-//       target[2 + x] = messageID[2 + x];
-//     }
-//   } else {
-//     target[2] = messageID[2];
-//   }
-//   return x;
-// }
 
 int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
                          int comm_socket, unsigned int result_code) {
@@ -653,7 +637,7 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
   printf("filter type: %d\n", f->getFilterType());
 
   int errr = 0;
-  std::vector<database_object> result;
+  std::vector<DatabaseObject> result;
   result = filterHandler(f, &errr, "ldap-lidi-ascii.csv", sr.sizeLimit);
 
   result = removeDuplicates(result);
