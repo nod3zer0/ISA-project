@@ -1,5 +1,8 @@
 #ifndef BER_CONSTANTS_H
 #define BER_CONSTANTS_H
+const unsigned int BER_TAG_LENGTH = 1;
+const unsigned int BER_LENGTH_OF_LENGTH_TAG = 1;
+const unsigned int BER_4BYTE_LENGTH_LENGTH = 4;
 const unsigned int BER_BIND_REQUEST_C = 0x60;
 const unsigned int BER_BIND_RESPONSE_C = 0x61;
 const unsigned int BER_SEARCH_REQUEST_C = 0x63;

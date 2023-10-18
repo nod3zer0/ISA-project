@@ -213,6 +213,85 @@ void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n, in
 
 }
 
+void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value, int *err) {
+    start[1] = 0x84;
+    start[2] = value >> 24;
+    start[3] = value >> 16;
+    start[4] = value >> 8;
+    start[5] = value;
+}
+
+
+void AppendLenght4Bytes(std::vector<unsigned char> &start, int value, int *err) {
+    start.push_back(0x84);//size
+    start.push_back(value >> 24);
+    start.push_back(value >> 16);
+    start.push_back(value >> 8);
+    start.push_back(value);
+}
+
+
+/**
+ * @brief writes int in BER LDAP format to char array
+ *
+ * @param s start of the string in char array
+ * @param value int to be written
+ * @return -1 if error, 0 if success
+ */
+int WriteIntAppend(std::vector<unsigned char> &s, int value) {
+    if (value < 0) {
+        return -1;
+    }
+    s.push_back(BER_INT_C);
+    if (value < 0x100) {
+        s.push_back(0x01);//length
+        s.push_back(value);
+        return 3;
+    } else if (value < 0x10000) {
+        s.push_back(0x02); //length
+        s.push_back(value >> 8);
+        s.push_back(value);
+        return 4;
+    } else if (value < 0x1000000) {
+        s.push_back(0x03); //length
+        s.push_back(value >> 16);
+        s.push_back(value >> 8);
+        s.push_back(value);
+        return 5;
+    } else if (value < 0x100000000) {
+        s.push_back(0x04); //length
+        s.push_back(value >> 24);
+        s.push_back(value >> 16);
+        s.push_back(value >> 8);
+        s.push_back(value);
+        return 6;
+    } else {
+        return -1;
+    }
+    return -1;
+}
+
+
+int HowManyBytesWillIntUse(int value) {
+    if (value < 0) {
+        return -1;
+    }
+    if (value < 0x100) {
+        return 3;
+    } else if (value < 0x10000) {
+        return 4;
+    } else if (value < 0x1000000) {
+        return 5;
+    } else if (value < 0x100000000) {
+        return 6;
+    } else {
+        return -1;
+    }
+    return -1;
+}
+
+
+
 /**
  * @brief go into tag
  * @param start  char array starting with tag from which to skip tags

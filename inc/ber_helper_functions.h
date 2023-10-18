@@ -1,6 +1,7 @@
 #ifndef BER_HELPER_FUNCTIONS_H
 #define BER_HELPER_FUNCTIONS_H
 #include <vector>
+#include "inc/ber_constants.h"
 /**
  * @brief parses 1 integer from ldap coded message
  *
@@ -26,7 +27,23 @@ typedef enum filterTypes {
   undefined,
 } filterTypes;
 
-int writeInt(unsigned char *s, int value);
+typedef enum berObjectTypes {
+  berSequenceObject,
+  berIntObject,
+  berStringObject,
+  berSetObject,
+  berEnumObject,
+  berUndefined,
+} berObjectTypes;
+
+int HowManyBytesWillIntUse(int value);
+
+int WriteIntAppend(std::vector<unsigned char> &s, int value);
+
+void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value, int *err) ;
+
+
+void AppendLenght4Bytes(std::vector<unsigned char> &start, int value, int *err) ;
 
 int ParseLength(std::vector<unsigned char>::iterator start, int *err);
 
