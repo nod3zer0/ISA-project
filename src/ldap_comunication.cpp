@@ -182,6 +182,19 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   return bindResponse.size();
 }
 
+BerObject* CreateBindResponse(BerObject *bindRequest, int resultCode) {
+  BerSequenceObject *envelope = new BerSequenceObject();
+  envelope->objects.push_back(
+      ((BerSequenceObject *)(bindRequest))->objects[0]);
+  BerSequenceObject *bindResponseSequence =
+      new BerSequenceObject(BER_BIND_RESPONSE_C);
+  envelope->objects.push_back(bindResponseSequence);
+  bindResponseSequence->objects.push_back(new BerEnumObject(resultCode));
+  bindResponseSequence->objects.push_back(new BerStringObject(""));
+  bindResponseSequence->objects.push_back(new BerStringObject(""));
+  return envelope;
+}
+
 int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
                         std::vector<unsigned char> &target) {
   target.push_back(messageID[0]); // copy tag TODO longform

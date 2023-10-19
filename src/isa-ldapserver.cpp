@@ -89,118 +89,104 @@ int main(int argc, const char *argv[]) {
 
   signal(SIGCHLD, SigCatcher);
 
- // while (1) // TODO: reactivate forking
+  // while (1) // TODO: reactivate forking
   //{
-    int commSocket =
-        accept(communicationSocket, (struct sockaddr *)&clientSA, &ClientSALen);
-    int flags = fcntl(communicationSocket, F_GETFL, 0);
-    returnCode = fcntl(communicationSocket, F_SETFL, flags | O_NONBLOCK);
-    if (returnCode < 0) {
-      perror("ERROR: fcntl");
-      exit(EXIT_FAILURE);
+  int commSocket =
+      accept(communicationSocket, (struct sockaddr *)&clientSA, &ClientSALen);
+  int flags = fcntl(communicationSocket, F_GETFL, 0);
+  returnCode = fcntl(communicationSocket, F_SETFL, flags | O_NONBLOCK);
+  if (returnCode < 0) {
+    perror("ERROR: fcntl");
+    exit(EXIT_FAILURE);
+  }
+  // if (commSocket <= 0) // TODO: reactivate forking
+  //  continue;          //  TODO: reactivate forking
+
+  int pid = fork();
+  if (pid < 0) {
+    perror("fork() failed");
+    exit(EXIT_FAILURE);
+  }
+
+  if (pid == 0) // new process to maintain client's requests:
+  {
+    int childPid = getpid();
+    close(communicationSocket); // not necessary in child process
+    printf("New connection (maintained by %d):\n", childPid);
+    if (inet_ntop(AF_INET6, &clientSA.sin6_addr, str, sizeof(str))) {
+      printf("%d:Client address is %s\n", childPid, str);
+      printf("%d:Client port is %d\n", childPid, ntohs(clientSA.sin6_port));
     }
-   // if (commSocket <= 0) // TODO: reactivate forking
-    //  continue;          //  TODO: reactivate forking
 
-    int pid = fork();
-    if (pid < 0) {
-      perror("fork() failed");
-      exit(EXIT_FAILURE);
+    std::vector<unsigned char> bindRequest;
+    int lenght = loadEnvelope(bindRequest, commSocket);
+    if (lenght < 0) {
+      printf("error receiving message\n"); // TODO send err
+      close(commSocket);
+      exit(0);
     }
+    printf("received message\n");
+    ;
 
-    if (pid == 0) // new process to maintain client's requests:
-    {
-      int childPid = getpid();
-      close(communicationSocket); // not necessary in child process
-      printf("New connection (maintained by %d):\n", childPid);
-      if (inet_ntop(AF_INET6, &clientSA.sin6_addr, str, sizeof(str))) {
-        printf("%d:Client address is %s\n", childPid, str);
-        printf("%d:Client port is %d\n", childPid, ntohs(clientSA.sin6_port));
-      }
+    int err = 0;
+    BerObject *berEnvelope = ParseBerObject(bindRequest.begin(), &err);
 
-      std::vector<unsigned char> bindRequest;
-      int lenght = loadEnvelope(bindRequest, commSocket);
+    BerObject *berBindResponse =
+        CreateBindResponse(berEnvelope,
+                           BER_LDAP_SUCCESS); // TODO : check err
+
+    std::vector<unsigned char> bindResponse =
+        berBindResponse->getBerRepresentation();
+    send(commSocket, &bindResponse[0],
+         bindResponse.size(), 0);
+
+    // search request -> search response
+
+    std::vector<unsigned char> envelope;
+
+    while (1) {
+      envelope.clear();
+      loadEnvelope(envelope, commSocket);
+
       if (lenght < 0) {
         printf("error receiving message\n"); // TODO send err
+        CreateBindResponse(bindRequest, bindResponse, BER_LDAP_PROTOCOL_ERROR);
+        send(commSocket, &bindResponse[0], bindResponse.size(), 0);
         close(commSocket);
         exit(0);
       }
       printf("received message\n");
-      std::vector<unsigned char> bindResponse;
 
-      CreateBindResponse(bindRequest, bindResponse,
-                         BER_LDAP_SUCCESS); // TODO : check err
-      send(commSocket, &bindResponse[0], bindResponse.size(), 0);
+      std::vector<unsigned char>::iterator envelopeTagPointer =
+          envelope.begin();
 
-      // search request -> search response
-      int err = 0;
-      std::vector<unsigned char> envelope;
-     loadEnvelope(envelope, commSocket);
+      goIntoTag(envelopeTagPointer, &err);
+      skipTags(envelopeTagPointer, 1, &err); // todo handle error
+      switch (envelopeTagPointer[0]) {
+      case 0x63:
+        printf("search request\n");
+        searchRequestHandler(envelope, commSocket, "ldap-lidi-ascii.csv");
+        break;
+      case 0x62: // unbind request
+        printf("unbind request\n");
+        printf("Connection to %s closed\n", str);
+        close(commSocket);
+        exit(0);
 
-      BerObject *berObject = ParseBerObject(bindRequest.begin(), &err);
-      // print berObject representation
-      std::vector<unsigned char> berRepresentation =
-          berObject->getBerRepresentation();
-      for (std::vector<unsigned char>::iterator it = berRepresentation.begin();
-           it != berRepresentation.end(); ++it) {
-        printf("%02x ", *it);
+      default:
+        printf("unknown request\n");
+        close(commSocket);
+        exit(0);
+        break;
       }
-
-      berObject = ParseBerObject(envelope.begin(), &err);
-      // print berObject representation
-      berRepresentation =
-          berObject->getBerRepresentation();
-      for (std::vector<unsigned char>::iterator it = berRepresentation.begin();
-           it != berRepresentation.end(); ++it) {
-        printf("%02x ", *it);
-      }
-      close(commSocket);
-      return 0;
-
-      while (1) {
-        envelope.clear();
-        loadEnvelope(envelope, commSocket);
-
-        if (lenght < 0) {
-          printf("error receiving message\n"); // TODO send err
-          CreateBindResponse(bindRequest, bindResponse,
-                             BER_LDAP_PROTOCOL_ERROR);
-          send(commSocket, &bindResponse[0], bindResponse.size(), 0);
-          close(commSocket);
-          exit(0);
-        }
-        printf("received message\n");
-
-        std::vector<unsigned char>::iterator envelopeTagPointer =
-            envelope.begin();
-
-        goIntoTag(envelopeTagPointer, &err);
-        skipTags(envelopeTagPointer, 1, &err); // todo handle error
-        switch (envelopeTagPointer[0]) {
-        case 0x63:
-          printf("search request\n");
-          searchRequestHandler(envelope, commSocket, "ldap-lidi-ascii.csv");
-          break;
-        case 0x62: // unbind request
-          printf("unbind request\n");
-          printf("Connection to %s closed\n", str);
-          close(commSocket);
-          exit(0);
-
-        default:
-          printf("unknown request\n");
-          close(commSocket);
-          exit(0);
-          break;
-        }
-      }
-
-      printf("Connection to %s closed\n", str);
-      close(commSocket);
-      exit(0);
-    } else // welcome process
-    {
-      close(commSocket);
     }
- // }
+
+    printf("Connection to %s closed\n", str);
+    close(commSocket);
+    exit(0);
+  } else // welcome process
+  {
+    close(commSocket);
+  }
+  // }
 }

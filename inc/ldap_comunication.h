@@ -1,17 +1,27 @@
 #ifndef LDAP_COMUNICATION_H
 #define LDAP_COMUNICATION_H
+#include "inc/AndFilterObject.h"
+#include "inc/BerObject.h"
+#include "inc/BerStringObject.h"
+#include "inc/BerParser.h"
+#include "inc/BerEnumObject.h"
+#include "inc/BerIntObject.h"
+#include "inc/BerBoolObject.h"
+#include "inc/BerUndefinedObject.h"
+#include "inc/BerSetObject.h"
+#include "inc/BerSequenceObject.h"
+#include "inc/DatabaseController.h"
+#include "inc/DatabaseObject.h"
+#include "inc/EqualityMatchFilterObject.h"
+#include "inc/FilterObject.h"
+#include "inc/NotFilterObject.h"
+#include "inc/OrFilterObject.h"
+#include "inc/SubstringFilterObject.h"
 #include "inc/ber_constants.h"
 #include "inc/ber_helper_functions.h"
-#include "inc/FilterObject.h"
-#include "inc/AndFilterObject.h"
-#include "inc/OrFilterObject.h"
-#include "inc/NotFilterObject.h"
-#include "inc/EqualityMatchFilterObject.h"
-#include "inc/SubstringFilterObject.h"
-#include "inc/DatabaseController.h"
 #include "inc/database_helper_functions.h"
 #include "inc/filter_helper_functions.h"
-#include "inc/DatabaseObject.h"
+#include <algorithm>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <stdio.h>
@@ -24,7 +34,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
-#include <algorithm>
 
 typedef struct searchedAttributes {
   bool cn;
@@ -68,7 +77,10 @@ int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
                            std::vector<unsigned char> &attributeValue,
                            int attributeValueLength);
 int CreateBindResponse(std::vector<unsigned char> &bindRequest,
-                       std::vector<unsigned char> &bindResponse,int returnCode);
+                       std::vector<unsigned char> &bindResponse,
+                       int returnCode);
+
+BerObject* CreateBindResponse(BerObject *bindRequest, int resultCode);
 
 int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
 
