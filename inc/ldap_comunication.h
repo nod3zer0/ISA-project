@@ -89,6 +89,8 @@ int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
 
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
                          int comm_socket, const char *fileName);
+int searchRequestHandler(BerObject *searchRequest, int comm_socket,
+                         const char *dbPath);
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 

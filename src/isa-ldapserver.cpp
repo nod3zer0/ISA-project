@@ -137,8 +137,7 @@ int main(int argc, const char *argv[]) {
 
     std::vector<unsigned char> bindResponse =
         berBindResponse->getBerRepresentation();
-    send(commSocket, &bindResponse[0],
-         bindResponse.size(), 0);
+    send(commSocket, &bindResponse[0], bindResponse.size(), 0);
 
     // search request -> search response
 
@@ -165,7 +164,8 @@ int main(int argc, const char *argv[]) {
       switch (envelopeTagPointer[0]) {
       case 0x63:
         printf("search request\n");
-        searchRequestHandler(envelope, commSocket, "ldap-lidi-ascii.csv");
+        //   searchRequestHandler(envelope, commSocket, "ldap-lidi-ascii.csv");
+        searchRequestHandler(ParseBerObject(envelope.begin(),&err), commSocket, "ldap-lidi-ascii.csv");
         break;
       case 0x62: // unbind request
         printf("unbind request\n");
