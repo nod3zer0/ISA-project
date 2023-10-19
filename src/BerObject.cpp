@@ -2,7 +2,7 @@
 
 
 berObjectTypes BerObject::getBerObjectType(){
-    return berUndefined;
+    return berErr;
 }
 long long int  BerObject::getLenght(){
     return -1;

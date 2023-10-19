@@ -1,6 +1,4 @@
 #include "inc/ber_helper_functions.h"
-#include <stdio.h>
-#include <stdlib.h>
 
 
 filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
@@ -55,19 +53,21 @@ unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err) {
     *err = 1;
     break;
   case 1:
-    value = s[1+ lengthLength];
+    value = s[1 + lengthLength];
     err = 0;
     break;
   case 2:
-    value = s[1+ lengthLength] << 8 | s[2+ lengthLength];
+    value = s[1 + lengthLength] << 8 | s[2 + lengthLength];
     err = 0;
     break;
   case 3:
-    value = s[1+ lengthLength] << 16 | s[2+ lengthLength] << 8 | s[3+ lengthLength];
+    value = s[1 + lengthLength] << 16 | s[2 + lengthLength] << 8 |
+            s[3 + lengthLength];
     err = 0;
     break;
   case 4:
-    value = s[1+ lengthLength] << 24 | s[2+ lengthLength] << 16 | s[3+ lengthLength] << 8 | s[4+ lengthLength];
+    value = s[1 + lengthLength] << 24 | s[2 + lengthLength] << 16 |
+            s[3 + lengthLength] << 8 | s[4 + lengthLength];
     err = 0;
     break;
 
@@ -147,7 +147,8 @@ int getLengthLength(std::vector<unsigned char>::iterator start, int *err) {
  * @param err error code, err 1 if length is longer than 4 bytes
  * @return length of the data (without tag and lenght bytes)
  */
-int ParseLength(std::vector<unsigned char>::iterator start, int *err) { // TODO doesnt work
+int ParseLength(std::vector<unsigned char>::iterator start,
+                int *err) { // TODO doesnt work
   int length = 0;
   if ((start[0] >> 7) != 1) { // if first bit is 0 -> shortform
     length = start[0];
@@ -179,13 +180,15 @@ int ParseLength(std::vector<unsigned char>::iterator start, int *err) { // TODO 
  * @param err error code
  * @return pointer to next tag
  */
-void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err) { // TODO: test
+void skipTags(std::vector<unsigned char>::iterator &start, int n,
+              int *err) { // TODO: test
 
   int i = 0;
   int jumpLength = 1;
   while (i < n) {
-    int length = ParseLength(start + jumpLength, err) + //TODO: fix to use vector
-                 getLengthLength(start + jumpLength, err);
+    int length =
+        ParseLength(start + jumpLength, err) + // TODO: fix to use vector
+        getLengthLength(start + jumpLength, err);
     if (*err != 0) {
       *err = 1;
       return;
@@ -194,7 +197,7 @@ void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err) { //
     jumpLength += length + 1; // +1 for tag
     i++;
   }
-  start= start+ jumpLength - 1; // -1 to get index of tag instead of length
+  start = start + jumpLength - 1; // -1 to get index of tag instead of length
 }
 
 // /** TODO: update to use vector
@@ -203,33 +206,33 @@ void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err) { //
 //  * @param array whole envelope
 //  * @param n number of bytes to increase
 //  */
-void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n, int *err) {
-    int length = ParseLength(start, err) + n;
+void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
+                          int *err) {
+  int length = ParseLength(start, err) + n;
 
-    start[1] = length >> 24;
-    start[2] = length >> 16;
-    start[3] = length >> 8;
-    start[4] = length;
-
+  start[1] = length >> 24;
+  start[2] = length >> 16;
+  start[3] = length >> 8;
+  start[4] = length;
 }
 
-void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value, int *err) {
-    start[1] = 0x84;
-    start[2] = value >> 24;
-    start[3] = value >> 16;
-    start[4] = value >> 8;
-    start[5] = value;
+void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value,
+                       int *err) {
+  start[1] = 0x84;
+  start[2] = value >> 24;
+  start[3] = value >> 16;
+  start[4] = value >> 8;
+  start[5] = value;
 }
 
-
-void AppendLenght4Bytes(std::vector<unsigned char> &start, int value, int *err) {
-    start.push_back(0x84);//size
-    start.push_back(value >> 24);
-    start.push_back(value >> 16);
-    start.push_back(value >> 8);
-    start.push_back(value);
+void AppendLenght4Bytes(std::vector<unsigned char> &start, int value,
+                        int *err) {
+  start.push_back(0x84); // size
+  start.push_back(value >> 24);
+  start.push_back(value >> 16);
+  start.push_back(value >> 8);
+  start.push_back(value);
 }
-
 
 /**
  * @brief writes int in BER LDAP format to char array
@@ -239,55 +242,54 @@ void AppendLenght4Bytes(std::vector<unsigned char> &start, int value, int *err) 
  * @return -1 if error, 0 if success
  */
 int WriteIntAppend(std::vector<unsigned char> &s, int value) {
-    if (value < 0) {
-        return -1;
-    }
-    s.push_back(BER_INT_C);
-    if (value < 0x100) {
-        s.push_back(0x01);//length
-        s.push_back(value);
-        return 3;
-    } else if (value < 0x10000) {
-        s.push_back(0x02); //length
-        s.push_back(value >> 8);
-        s.push_back(value);
-        return 4;
-    } else if (value < 0x1000000) {
-        s.push_back(0x03); //length
-        s.push_back(value >> 16);
-        s.push_back(value >> 8);
-        s.push_back(value);
-        return 5;
-    } else if (value < 0x100000000) {
-        s.push_back(0x04); //length
-        s.push_back(value >> 24);
-        s.push_back(value >> 16);
-        s.push_back(value >> 8);
-        s.push_back(value);
-        return 6;
-    } else {
-        return -1;
-    }
+  if (value < 0) {
     return -1;
+  }
+  s.push_back(BER_INT_C);
+  if (value < 0x100) {
+    s.push_back(0x01); // length
+    s.push_back(value);
+    return 3;
+  } else if (value < 0x10000) {
+    s.push_back(0x02); // length
+    s.push_back(value >> 8);
+    s.push_back(value);
+    return 4;
+  } else if (value < 0x1000000) {
+    s.push_back(0x03); // length
+    s.push_back(value >> 16);
+    s.push_back(value >> 8);
+    s.push_back(value);
+    return 5;
+  } else if (value < 0x100000000) {
+    s.push_back(0x04); // length
+    s.push_back(value >> 24);
+    s.push_back(value >> 16);
+    s.push_back(value >> 8);
+    s.push_back(value);
+    return 6;
+  } else {
+    return -1;
+  }
+  return -1;
 }
 
-
 int HowManyBytesWillIntUse(int value) {
-    if (value < 0) {
-        return -1;
-    }
-    if (value < 0x100) {
-        return 3;
-    } else if (value < 0x10000) {
-        return 4;
-    } else if (value < 0x1000000) {
-        return 5;
-    } else if (value < 0x100000000) {
-        return 6;
-    } else {
-        return -1;
-    }
+  if (value < 0) {
     return -1;
+  }
+  if (value < 0x100) {
+    return 3;
+  } else if (value < 0x10000) {
+    return 4;
+  } else if (value < 0x1000000) {
+    return 5;
+  } else if (value < 0x100000000) {
+    return 6;
+  } else {
+    return -1;
+  }
+  return -1;
 }
 
 
@@ -298,13 +300,13 @@ int HowManyBytesWillIntUse(int value) {
  * @param err error code
  * @return pointer to next tag
  */
-void goIntoTag(std::vector<unsigned char>::iterator &start, int *err) { // TODO: test
-  int length = getLengthLength(start + 1, err) + 1;        // +1 for tag
+void goIntoTag(std::vector<unsigned char>::iterator &start,
+               int *err) {                          // TODO: test
+  int length = getLengthLength(start + 1, err) + 1; // +1 for tag
   if (*err != 0) {
     *err = 1;
     return;
   }
 
- start+= length; // return pointer to next tag
-
+  start += length; // return pointer to next tag
 }

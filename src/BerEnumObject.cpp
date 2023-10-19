@@ -20,4 +20,4 @@ std::vector<unsigned char> BerEnumObject::getBerRepresentation() {
   return berRepresentation;
 }
 
-BerEnumObject::BerEnumObject(char value) { value = 0; }
+BerEnumObject::BerEnumObject(char value) { this->value = value; }

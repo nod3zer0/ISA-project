@@ -2,6 +2,8 @@
 #define BER_HELPER_FUNCTIONS_H
 #include <vector>
 #include "inc/ber_constants.h"
+#include <stdio.h>
+#include <stdlib.h>
 /**
  * @brief parses 1 integer from ldap coded message
  *
@@ -33,7 +35,9 @@ typedef enum berObjectTypes {
   berStringObject,
   berSetObject,
   berEnumObject,
+  berBoolObject,
   berUndefined,
+  berErr,
 } berObjectTypes;
 
 int HowManyBytesWillIntUse(int value);
