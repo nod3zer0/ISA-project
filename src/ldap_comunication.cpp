@@ -182,10 +182,9 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
   return bindResponse.size();
 }
 
-BerObject* CreateBindResponse(BerObject *bindRequest, int resultCode) {
+BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode) {
   BerSequenceObject *envelope = new BerSequenceObject();
-  envelope->objects.push_back(
-      ((BerSequenceObject *)(bindRequest))->objects[0]);
+  envelope->objects.push_back(((BerSequenceObject *)(bindRequest))->objects[0]);
   BerSequenceObject *bindResponseSequence =
       new BerSequenceObject(BER_BIND_RESPONSE_C);
   envelope->objects.push_back(bindResponseSequence);
@@ -241,6 +240,21 @@ int sendSearchResultDone(std::vector<unsigned char> &searchRequest,
   send(comm_socket, &envelope[0], 12 + x, 0);
 
   return 1;
+}
+
+int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
+                         unsigned int result_code) {
+  int err = 0;
+  BerSequenceObject *envelope = new BerSequenceObject();
+  envelope->objects.push_back(searchRequest->objects[0]); // copy message ID
+  BerSequenceObject *searchResultDoneSequence =
+      new BerSequenceObject(BER_SEARCH_RESULT_DONE_C);
+  envelope->objects.push_back(searchResultDoneSequence);
+  searchResultDoneSequence->objects.push_back(new BerEnumObject(result_code));
+  searchResultDoneSequence->objects.push_back(new BerStringObject(""));
+  searchResultDoneSequence->objects.push_back(new BerStringObject(""));
+  send(comm_socket, &envelope->getBerRepresentation()[0],
+       envelope->getBerRepresentation().size(), 0);
 }
 
 int searchRequestHandler(std::vector<unsigned char> &searchRequest,
@@ -368,14 +382,127 @@ int searchRequestHandler(std::vector<unsigned char> &searchRequest,
     }
     send(comm_socket, &searchResultEntry[0], searchResultEntry.size(), 0);
   }
+  BerObject *berSearchRequest = ParseBerObject(searchRequest.begin(), &err);
   if (sizeLimitExceeded) {
-    sendSearchResultDone(searchRequest, comm_socket,
+
+    sendSearchResultDone((BerSequenceObject*)berSearchRequest, comm_socket,
                          BER_LDAP_SIZE_LIMIT_EXCEEDED);
   } else {
-    sendSearchResultDone(searchRequest, comm_socket, BER_LDAP_SUCCESS);
+    sendSearchResultDone((BerSequenceObject*)berSearchRequest, comm_socket, BER_LDAP_SUCCESS);
   }
   return 0;
 }
+
+// int searchRequestHandler(BerObject *searchRequest, int comm_socket,
+//                          const char *dbPath) {
+//   int err = 0;
+
+//   BerSequenceObject *envelope = (BerSequenceObject *)searchRequest;
+//   BerIntObject *messageID = (BerIntObject *)envelope->objects[0];
+//   BerSequenceObject *searchRequestSequence =
+//       (BerSequenceObject *)envelope->objects[1];
+
+//   // 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17
+//   // 30 42 02 01 02 63 3d 04 00 0a 01 02 0a 01 00 02 01 00 02 01 00 01 01 00
+//   // a0 20  a3 0d 04 03 75 69 64 04 06 72 69 65 6d 61 6e a3 0f 04 03 75 69
+//   // 64 04 08 65 69 6e 73 74 61 69 6e  30 08 04 02 63 6e 04 02 64 6e
+//   // sequence - envelope
+//   //    int   - message ID
+//   //    application 3 - search request
+//   //        octed string - base object
+//   //        enum - scope
+//   //        enum - derefAliases
+//   //        int - sizeLimit
+//   //        int - timeLimit
+//   //        bool - typesOnly
+//   //        sequence - filter
+//   //        sequence - attributes
+//   searchRequestType sr;
+//   // inicialization TODO make constructor
+//   sr.messageIDLength = 0;
+//   sr.messageID = new std::vector<unsigned char>();
+//   sr.sizeLimit = 0;
+//   sr.attributes.cn = false;
+//   sr.attributes.email = false;
+//   sr.attributes.uid = false;
+
+//   // cn
+//   std::vector<unsigned char> cn = {'c', 'n'};
+//   // email
+//   std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+//   // uid
+//   std::vector<unsigned char> uid = {'u', 'i', 'd'};
+
+//   sr.sizeLimit =
+//       ((BerIntObject *)searchRequestSequence->objects[3])->getValue();
+
+//   filter *f =
+//   convertToFilterObject((searchRequestSequence->objects[6])->getBerRepresentation());
+//   printf("filter type: %d\n", f->getFilterType());
+
+//   std::vector<DatabaseObject> result;
+//   result = filterHandler(f, &errr, dbPath, sr.sizeLimit);
+
+//   result = removeDuplicates(result);
+//   bool sizeLimitExceeded = false;
+//   if (errr == 1) {
+//     sizeLimitExceeded = true;
+//   }
+
+//   for (; skipLength < attributesLength;) {
+
+//     int atrributeLengthLenght = getLengthLength(attributesPointer + 1, &err);
+//     int atributeDataLength = ParseLength(attributesPointer + 1, &err);
+
+//     std::vector<unsigned char> attributeDescription =
+//         std::vector<unsigned char>(
+//             &attributesPointer[1 + atrributeLengthLenght],
+//             &attributesPointer[1 + atributeDataLength +
+//             atrributeLengthLenght]);
+
+//     if (attributeDescription == cn) {
+//       sr.attributes.cn = true;
+//     }
+//     if (attributeDescription == email) {
+//       sr.attributes.email = true;
+//     }
+//     if (attributeDescription == uid) {
+//       sr.attributes.uid = true;
+//     }
+//     skipLength += 1 + atributeDataLength + atrributeLengthLenght;
+//     skipTags(attributesPointer, 1, &err);
+//   }
+
+//   for (unsigned long int i = 0; i < result.size(); i++) {
+//     std::vector<unsigned char> searchResultEntry;
+//     InitSearchResultEntry(searchResultEntry, *(sr.messageID),
+//                           result[i].get_uid(), result[i].get_uid().size());
+//     std::vector<unsigned char> resCN = result[i].get_name();
+//     std::vector<unsigned char> resEmail = result[i].get_email();
+//     std::vector<unsigned char> resUID = result[i].get_uid();
+
+//     if (sr.attributes.cn) {
+//       AddToSearchResultEntry(searchResultEntry, cn, 2, resCN,
+//                              result[i].get_name().size());
+//     }
+//     if (sr.attributes.email) {
+//       AddToSearchResultEntry(searchResultEntry, email, 5, resEmail,
+//                              result[i].get_email().size());
+//     }
+//     if (sr.attributes.uid) {
+//       AddToSearchResultEntry(searchResultEntry, uid, 3, resUID,
+//                              result[i].get_uid().size());
+//     }
+//     send(comm_socket, &searchResultEntry[0], searchResultEntry.size(), 0);
+//   }
+//   if (sizeLimitExceeded) {
+//     sendSearchResultDone(searchRequest, comm_socket,
+//                          BER_LDAP_SIZE_LIMIT_EXCEEDED);
+//   } else {
+//     sendSearchResultDone(searchRequest, comm_socket, BER_LDAP_SUCCESS);
+//   }
+//   return 0;
+// }
 
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
   unsigned char buff[1024];

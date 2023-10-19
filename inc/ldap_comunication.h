@@ -1,15 +1,15 @@
 #ifndef LDAP_COMUNICATION_H
 #define LDAP_COMUNICATION_H
 #include "inc/AndFilterObject.h"
-#include "inc/BerObject.h"
-#include "inc/BerStringObject.h"
-#include "inc/BerParser.h"
+#include "inc/BerBoolObject.h"
 #include "inc/BerEnumObject.h"
 #include "inc/BerIntObject.h"
-#include "inc/BerBoolObject.h"
-#include "inc/BerUndefinedObject.h"
-#include "inc/BerSetObject.h"
+#include "inc/BerObject.h"
+#include "inc/BerParser.h"
 #include "inc/BerSequenceObject.h"
+#include "inc/BerSetObject.h"
+#include "inc/BerStringObject.h"
+#include "inc/BerUndefinedObject.h"
 #include "inc/DatabaseController.h"
 #include "inc/DatabaseObject.h"
 #include "inc/EqualityMatchFilterObject.h"
@@ -80,7 +80,10 @@ int CreateBindResponse(std::vector<unsigned char> &bindRequest,
                        std::vector<unsigned char> &bindResponse,
                        int returnCode);
 
-BerObject* CreateBindResponse(BerObject *bindRequest, int resultCode);
+BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode);
+
+int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
+                         unsigned int result_code);
 
 int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
 
