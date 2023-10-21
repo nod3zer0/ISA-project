@@ -9,7 +9,6 @@ long long int BerBoolObject::getLenght() {
 
 std::vector<unsigned char> BerBoolObject::getBerRepresentation() {
   const int BOOL_DATA_LENGTH = 1;
-  int err = 0;
   std::vector<unsigned char> berRepresentation;
   berRepresentation.push_back(BER_BOOL_C);
   berRepresentation.push_back(BOOL_DATA_LENGTH);

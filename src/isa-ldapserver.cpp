@@ -21,6 +21,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#define DEBUG
 
 // int main(int argc, const char *argv[]) {
 
@@ -145,11 +146,18 @@ int main(int argc, const char *argv[]) {
 
     while (1) {
       envelope.clear();
-      loadEnvelope(envelope, commSocket);
+      int err = loadEnvelope(envelope, commSocket);
+      if (err == -1) {
+        printf("connection closed\n");
+        close(commSocket);
+        exit(0);
+      }
 
       if (lenght < 0) {
         printf("error receiving message\n"); // TODO send err
-        CreateBindResponse(bindRequest, bindResponse, BER_LDAP_PROTOCOL_ERROR);
+        berBindResponse =
+            CreateBindResponse(berEnvelope, BER_LDAP_PROTOCOL_ERROR);
+        bindResponse = berBindResponse->getBerRepresentation();
         send(commSocket, &bindResponse[0], bindResponse.size(), 0);
         close(commSocket);
         exit(0);
@@ -165,7 +173,8 @@ int main(int argc, const char *argv[]) {
       case 0x63:
         printf("search request\n");
         //   searchRequestHandler(envelope, commSocket, "ldap-lidi-ascii.csv");
-        searchRequestHandler(ParseBerObject(envelope.begin(),&err), commSocket, "ldap-lidi-ascii.csv");
+        searchRequestHandler(ParseBerObject(envelope.begin(), &err), commSocket,
+                             "ldap-lidi-ascii.csv");
         break;
       case 0x62: // unbind request
         printf("unbind request\n");

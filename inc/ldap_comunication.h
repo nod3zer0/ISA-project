@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
+#include <string>
 
 typedef struct searchedAttributes {
   bool cn;
@@ -57,7 +58,6 @@ typedef enum { cn, email, uid } atributeDescriptions;
 //     sequence - attributes
 
 typedef struct searchRequest {
-  std::vector<unsigned char> *messageID;
   int messageIDLength;
   unsigned int sizeLimit;
   searchedAttributesType attributes;
@@ -67,31 +67,12 @@ typedef struct searchRequest {
 /// @param partialAttributeList pointer to empty attribute list
 /// @return 0 if success, -1 if error
 
-int InitSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
-                          std::vector<unsigned char> messageID,
-                          std::vector<unsigned char> LDAPDN, int LDAPDNLength);
-
-int AddToSearchResultEntry(std::vector<unsigned char> &partialAttributeList,
-                           std::vector<unsigned char> &attributeDescription,
-                           int attributeDescriptionLength,
-                           std::vector<unsigned char> &attributeValue,
-                           int attributeValueLength);
-int CreateBindResponse(std::vector<unsigned char> &bindRequest,
-                       std::vector<unsigned char> &bindResponse,
-                       int returnCode);
-
 BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode);
 
 int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code);
-
-int sendSearchResultEntry(unsigned char *searchRequest, int comm_socket);
-
-int searchRequestHandler(std::vector<unsigned char> &searchRequest,
-                         int comm_socket, const char *fileName);
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath);
-
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 
 int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,

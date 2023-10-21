@@ -3,8 +3,7 @@
 #include "inc/BerObject.h"
 #include "inc/ber_constants.h"
 #include "inc/ber_helper_functions.h"
-#include "string.h"
-
+#include <string>
 #include <vector>
 
 class BerStringObject : public BerObject {
@@ -14,7 +13,8 @@ public:
   long long int getLenght();
   std::vector<unsigned char> getBerRepresentation();
   BerStringObject();
-  BerStringObject(char *value);
+  BerStringObject(std::vector<unsigned char> value);
+BerStringObject(std::string value);
 };
 
 #endif

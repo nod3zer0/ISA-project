@@ -8,9 +8,8 @@ long long int BerIntObject::getLenght() {
 }
 
 std::vector<unsigned char> BerIntObject::getBerRepresentation() {
-  int err = 0;
   std::vector<unsigned char> berRepresentation;
-  int dataLenght = WriteIntAppend(berRepresentation, value);
+  WriteIntAppend(berRepresentation, value);
   return berRepresentation;
 }
 

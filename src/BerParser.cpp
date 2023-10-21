@@ -12,7 +12,7 @@ BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
       BerSequenceObject *berSequenceObject = new BerSequenceObject();
       int length = ParseLength(start + 1, err);
       goIntoTag(start, err);
-      int lenghtLength = getLengthLength(start +1, err);
+      getLengthLength(start +1, err);
       int i = 0;
       while (i < length) {
         BerObject *parsedBerObject = ParseBerObject(start, err);
@@ -31,7 +31,7 @@ BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
       int length = ParseLength(start + 1, err);
       goIntoTag(start, err);
 
-      int lenghtLength = getLengthLength(start +1, err);
+      getLengthLength(start +1, err);
       int i = 0;
       while (i < length) {
         BerObject *parsedBerObject = ParseBerObject(start, err);
@@ -50,7 +50,7 @@ BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
       int length = ParseLength(start + 1, err);
       goIntoTag(start, err);
 
-      int lenghtLength = getLengthLength(start +1, err);
+      getLengthLength(start +1, err);
       int i = 0;
       while (i < length) {
         BerObject *parsedBerObject = ParseBerObject(start, err);
@@ -108,7 +108,7 @@ BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
   }
   case BER_BOOL_C: {
     int lenghtOfLenght = getLengthLength(start +1, err);
-    int length = ParseLength(start + 1, err);
+    ParseLength(start + 1, err);
     berObject = new BerBoolObject(start[lenghtOfLenght + BER_TAG_LENGTH]);
     break;
   }
