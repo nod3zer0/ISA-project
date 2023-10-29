@@ -49,18 +49,18 @@ void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value, i
 
 void AppendLenght4Bytes(std::vector<unsigned char> &start, int value, int *err) ;
 
-int ParseLength(std::vector<unsigned char>::iterator start, int *err);
+int GetLength(std::vector<unsigned char>::iterator start, int *err,std::vector<unsigned char>::iterator end);
 
-unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err);
+unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err,std::vector<unsigned char>::iterator end);
 
-int getLengthLength(std::vector<unsigned char>::iterator start, int *err);
+int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,std::vector<unsigned char>::iterator end);
 
-void skipTags(std::vector<unsigned char>::iterator &start, int n, int *err);
+void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err, std::vector<unsigned char>::iterator end);
 
-void goIntoTag(std::vector<unsigned char>::iterator &start, int *err);
+void GoIntoTag(std::vector<unsigned char>::iterator &start, int *err, std::vector<unsigned char>::iterator end);
 
 void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
-                          int *err);
+                          int *err,std::vector<unsigned char>::iterator end);
 
 filterTypes getFilterType(std::vector<unsigned char>::iterator start);
 

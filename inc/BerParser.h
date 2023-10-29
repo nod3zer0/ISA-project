@@ -15,6 +15,6 @@
 
 
 BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
-                          int *err);
+                          int *err,std::vector<unsigned char>::iterator end);
 
 #endif

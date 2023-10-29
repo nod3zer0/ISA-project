@@ -39,4 +39,6 @@ std::vector<unsigned char> BerSequenceObject::getBerRepresentation() {
 
 BerSequenceObject::BerSequenceObject() { tag = BER_SEQUENCE_C; }
 
+int BerSequenceObject::GetTag() { return tag; }
+
 BerSequenceObject::BerSequenceObject(int tag) { this->tag = tag; }

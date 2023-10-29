@@ -24,6 +24,6 @@ bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) ;
 std::vector<DatabaseObject>
 filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit);
 
-filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter);
+filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter, std::vector<unsigned char>::iterator end);
 
 #endif

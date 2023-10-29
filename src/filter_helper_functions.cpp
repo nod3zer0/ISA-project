@@ -94,6 +94,9 @@ bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
     } else if (attributeDescription == uid) {
       return equalityMatchHandler((equalityMatchFilter *)f, err,
                                   databaseEntry.get_uid());
+    } else {
+      *err = 2;
+      return false;
     }
 
   } break;
@@ -109,6 +112,9 @@ bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
     } else if (attributeDescription == uid) {
       return substrFilterHandler((SubstringFilter *)f, err,
                                  databaseEntry.get_uid());
+    } else {
+      *err = 2;
+      return false;
     }
   } break;
   case AND: {
@@ -132,7 +138,10 @@ bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
   } break;
   case NOT: {
     notFilter *nf = (notFilter *)f;
-    return !filterLine((nf->filter), err, databaseEntry);
+    bool result = !filterLine((nf->filter), err, databaseEntry);
+    if (*err == 2)
+      return false;
+    return true;
   } break;
   default:
     return false;
@@ -185,7 +194,8 @@ filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
   return resultDB;
 }
 
-filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
+filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
+                              std::vector<unsigned char>::iterator end) {
 
   filter *f;
   int err;
@@ -197,23 +207,23 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
   switch (getFilterType(BERfilter)) {
   case equalityMatch:
 
-    goIntoTag(BERfilter, &err);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
-    lenght = ParseLength(BERfilter + 1, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
 
-    ll = getLengthLength(BERfilter + 1, &err);
+    ll = GetLengthOfLength(BERfilter + 1, &err, end);
 
     for (int i = 0; i < lenght; i++) {
       attributeDescription.push_back(BERfilter[1 + ll + i]);
     }
 
-    skipTags(BERfilter, 1, &err);
+    SkipTags(BERfilter, 1, &err, end);
     if (err != 0)
       return new filter();
 
-    lenght = ParseLength(BERfilter + 1, &err);
-    ll = getLengthLength(BERfilter + 1, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
+    ll = GetLengthOfLength(BERfilter + 1, &err, end);
 
     for (int i = 0; i < lenght; i++) {
       assertionValue.push_back(BERfilter[1 + ll + i]);
@@ -227,22 +237,22 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
     std::vector<unsigned char> initial;
     std::vector<std::vector<unsigned char>> any;
     std::vector<unsigned char> final;
-    goIntoTag(BERfilter, &err);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
-    lenght = ParseLength(BERfilter + 1, &err);
-    ll = getLengthLength(BERfilter + 1, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
+    ll = GetLengthOfLength(BERfilter + 1, &err, end);
 
     for (int i = 0; i < lenght; i++) {
       attributeDescription.push_back(BERfilter[1 + ll + i]);
     }
 
-    skipTags(BERfilter, 1, &err);
+    SkipTags(BERfilter, 1, &err, end);
     if (err != 0)
       return new filter();
-    int lenghtOfSequence = ParseLength(BERfilter + 1, &err);
-    int lenghtOflenOfSequence = getLengthLength(BERfilter + 1, &err);
-    goIntoTag(BERfilter, &err);
+    int lenghtOfSequence = GetLength(BERfilter + 1, &err, end);
+    int lenghtOflenOfSequence = GetLengthOfLength(BERfilter + 1, &err, end);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
 
@@ -250,31 +260,31 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
     while (currentBitPointer < lenghtOfSequence + lenghtOflenOfSequence) {
       switch (BERfilter[0]) {
       case 0x80: {
-        int dataLenght = ParseLength(BERfilter + 1, &err);
-        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        int dataLenght = GetLength(BERfilter + 1, &err, end);
+        int LenghtLenght = GetLengthOfLength(BERfilter + 1, &err, end);
         initial = std::vector<unsigned char>(BERfilter + 1 + LenghtLenght,
                                              BERfilter + 1 + LenghtLenght +
                                                  dataLenght);
       } break;
       case 0x81: {
-        int dataLenght = ParseLength(BERfilter + 1, &err);
-        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        int dataLenght = GetLength(BERfilter + 1, &err, end);
+        int LenghtLenght = GetLengthOfLength(BERfilter + 1, &err, end);
         std::vector<unsigned char> tmp = std::vector<unsigned char>(
             BERfilter + 1 + LenghtLenght,
             BERfilter + 1 + LenghtLenght + dataLenght);
         any.push_back(tmp);
       } break;
       case 0x82: {
-        int dataLenght = ParseLength(BERfilter + 1, &err);
-        int LenghtLenght = getLengthLength(BERfilter + 1, &err);
+        int dataLenght = GetLength(BERfilter + 1, &err, end);
+        int LenghtLenght = GetLengthOfLength(BERfilter + 1, &err, end);
         final = std::vector<unsigned char>(BERfilter + 1 + LenghtLenght,
                                            BERfilter + 1 + LenghtLenght +
                                                dataLenght);
       } break;
       }
-      currentBitPointer += 1 + getLengthLength(BERfilter + 1, &err) +
-                           ParseLength(BERfilter + 1, &err);
-      skipTags(BERfilter, 1, &err);
+      currentBitPointer += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
+                           GetLength(BERfilter + 1, &err, end);
+      SkipTags(BERfilter, 1, &err, end);
     }
     f = new SubstringFilter(attributeDescription, initial, any, final);
 
@@ -282,49 +292,49 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter) {
   case AND:
     f = new andFilter();
 
-    lenght = ParseLength(BERfilter + 1, &err);
-    goIntoTag(BERfilter, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
     for (int i = 0; i < lenght;) {
 
       if (err != 0)
         return new filter();
-      filter *tmpF = convertToFilterObject(BERfilter);
+      filter *tmpF = convertToFilterObject(BERfilter, end);
       printf("filter type: %d\n", tmpF->getFilterType());
       fflush(stdout);
       ((andFilter *)f)->filters.push_back(tmpF);
-      i += 1 + getLengthLength(BERfilter + 1, &err) +
-           ParseLength(BERfilter + 1, &err);
-      skipTags(BERfilter, 1, &err);
+      i += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
+           GetLength(BERfilter + 1, &err, end);
+      SkipTags(BERfilter, 1, &err, end);
     }
 
     break;
   case OR:
     f = new orFilter();
-    lenght = ParseLength(BERfilter + 1, &err);
-    goIntoTag(BERfilter, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
 
     for (int i = 0; i < lenght;) {
       if (err != 0)
         return new filter();
-      filter *tmpF = convertToFilterObject(BERfilter);
+      filter *tmpF = convertToFilterObject(BERfilter, end);
       ((orFilter *)f)->filters.push_back(tmpF);
-      i += 1 + getLengthLength(BERfilter + 1, &err) +
-           ParseLength(BERfilter + 1, &err);
-      skipTags(BERfilter, 1, &err);
+      i += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
+           GetLength(BERfilter + 1, &err, end);
+      SkipTags(BERfilter, 1, &err, end);
     }
 
     break;
   case NOT: {
     f = new notFilter();
-    lenght = ParseLength(BERfilter + 1, &err);
-    goIntoTag(BERfilter, &err);
+    lenght = GetLength(BERfilter + 1, &err, end);
+    GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new filter();
-    filter *tmpF = convertToFilterObject(BERfilter);
+    filter *tmpF = convertToFilterObject(BERfilter, end);
     ((notFilter *)f)->filter = tmpF;
     break;
   }

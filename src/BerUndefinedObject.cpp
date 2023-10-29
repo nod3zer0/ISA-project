@@ -6,7 +6,7 @@ berObjectTypes BerUndefinedObject::getBerObjectType(){
 }
 long long int  BerUndefinedObject::getLenght(){
     int err = 0;
-    return BER_TAG_LENGTH + getLengthLength(value.begin() +1, &err)  + ParseLength(value.begin() +1, &err);
+    return BER_TAG_LENGTH + GetLengthOfLength(value.begin() +1, &err, value.end())  + GetLength(value.begin() +1, &err, value.end());
 }
 std::vector<unsigned char> BerUndefinedObject::getBerRepresentation(){
     return value;

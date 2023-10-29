@@ -7,8 +7,9 @@
 #include <vector>
 
 class BerSequenceObject : public BerObject {
-    private:
-    int tag;
+private:
+  int tag;
+
 public:
   std::vector<BerObject *> objects;
   berObjectTypes getBerObjectType();
@@ -16,6 +17,7 @@ public:
   std::vector<unsigned char> getBerRepresentation();
   BerSequenceObject(int tag);
   BerSequenceObject();
+  int GetTag();
 };
 
 #endif

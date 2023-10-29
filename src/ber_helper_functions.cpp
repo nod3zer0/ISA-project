@@ -1,6 +1,5 @@
 #include "inc/ber_helper_functions.h"
 
-
 filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
   if (start[0] == 0xA0) {
     return AND;
@@ -38,10 +37,10 @@ filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
 //  * @param s start of the integer in char array
 //  * @return int - parsed integer
 //  */
-unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err) {
+unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err, std::vector<unsigned char>::iterator end) {
   unsigned int value = 0;
-  int length = ParseLength(s + 1, err);
-  int lengthLength = getLengthLength(s + 1, err);
+  int length = GetLength(s + 1, err, end);
+  int lengthLength = GetLengthOfLength(s + 1, err, end);
   if (length > 4) {
     return 0;
     *err = 2;
@@ -127,8 +126,7 @@ unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err) {
  * @param err error code
  * @return number of bytes that takes to necode length of data in BER
  */
-int getLengthLength(std::vector<unsigned char>::iterator start, int *err) {
-
+int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err, std::vector<unsigned char>::iterator end) {
   int length = 0;
   if ((start[0] >> 7) != 1) { // if first bit is 0 -> shortform
     length = 1;
@@ -147,25 +145,30 @@ int getLengthLength(std::vector<unsigned char>::iterator start, int *err) {
  * @param err error code, err 1 if length is longer than 4 bytes
  * @return length of the data (without tag and lenght bytes)
  */
-int ParseLength(std::vector<unsigned char>::iterator start,
-                int *err) { // TODO doesnt work
+int GetLength(std::vector<unsigned char>::iterator start,
+                int *err, std::vector<unsigned char>::iterator end) { // TODO doesnt work
   int length = 0;
   if ((start[0] >> 7) != 1) { // if first bit is 0 -> shortform
     length = start[0];
     *err = 0;
   } else {
-    int lengthLength = start[0] & 0x7F; // remove bit indicating longform
-    if (lengthLength > 4 &&
-        start[lengthLength - 4] > 0x00) { // only support up to 4 bytes, more is
+    int lengthOfLength = start[0] & 0x7F; // remove bit indicating longform
+
+    if(lengthOfLength > std::distance(start, end)){ //array is too short
+      *err = 1;
+      return 0;
+    }
+    if (lengthOfLength > 4 &&
+        start[lengthOfLength - 4] > 0x00) { // only support up to 4 bytes, more is
                                           // not necessary for this project
       *err = 1;
       return 0;
     }
-    int startOfLength = lengthLength - 3;
+    int startOfLength = lengthOfLength - 3;
     if (startOfLength < 0) {
       startOfLength = 1;
     }
-    for (int i = startOfLength; i <= lengthLength; i++) {
+    for (int i = startOfLength; i <= lengthOfLength; i++) {
       length = length << 8 | start[i];
     }
     *err = 0;
@@ -180,15 +183,19 @@ int ParseLength(std::vector<unsigned char>::iterator start,
  * @param err error code
  * @return pointer to next tag
  */
-void skipTags(std::vector<unsigned char>::iterator &start, int n,
-              int *err) { // TODO: test
+void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
+              std::vector<unsigned char>::iterator end) { // TODO: test
 
   int i = 0;
   int jumpLength = 1;
   while (i < n) {
+    if(std::distance(start, end) < jumpLength){
+      *err = 1;
+      return;
+    }
     int length =
-        ParseLength(start + jumpLength, err) + // TODO: fix to use vector
-        getLengthLength(start + jumpLength, err);
+        GetLength(start + jumpLength, err, end) + // TODO: fix to use vector
+        GetLengthOfLength(start + jumpLength, err, end);
     if (*err != 0) {
       *err = 1;
       return;
@@ -207,8 +214,9 @@ void skipTags(std::vector<unsigned char>::iterator &start, int n,
 //  * @param n number of bytes to increase
 //  */
 void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
-                          int *err) {
-  int length = ParseLength(start, err) + n;
+                          int *err, std::vector<unsigned char>::iterator end) {
+
+  int length = GetLength(start, err, end) + n;
 
   start[1] = length >> 24;
   start[2] = length >> 16;
@@ -292,17 +300,16 @@ int HowManyBytesWillIntUse(int value) {
   return -1;
 }
 
-
-
 /**
  * @brief go into tag
  * @param start  char array starting with tag from which to skip tags
  * @param err error code
  * @return pointer to next tag
  */
-void goIntoTag(std::vector<unsigned char>::iterator &start,
-               int *err) {                          // TODO: test
-  int length = getLengthLength(start + 1, err) + 1; // +1 for tag
+void GoIntoTag(std::vector<unsigned char>::iterator &start, int *err,
+               std::vector<unsigned char>::iterator end) {
+
+  int length = GetLengthOfLength(start + 1, err, end) + 1; // +1 for tag
   if (*err != 0) {
     *err = 1;
     return;

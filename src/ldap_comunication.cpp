@@ -112,9 +112,9 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
   sr.sizeLimit =
       ((BerIntObject *)searchRequestSequence->objects[3])->getValue();
-
+    std::vector<unsigned char> filtersBer = (searchRequestSequence->objects[6])->getBerRepresentation();
   filter *f = convertToFilterObject(
-      (searchRequestSequence->objects[6])->getBerRepresentation().begin());
+      filtersBer.begin(),filtersBer.end());
   printf("filter type: %d\n", f->getFilterType());
 
   std::vector<DatabaseObject> result;
@@ -202,8 +202,8 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
           (buff[1] & 0x7F) <= resNow) { // checks if bytes containing lenght of
         // message are complete
         bindRequest.insert(bindRequest.end(), buff, buff + resNow);
-        lenghtOfMessage = ParseLength(bindRequest.begin() + 1, &err) +
-                          getLengthLength(bindRequest.begin() + 1, &err) + 1;
+        lenghtOfMessage = GetLength(bindRequest.begin() + 1, &err, bindRequest.end()) +
+                          GetLengthOfLength(bindRequest.begin() + 1, &err, bindRequest.end()) + 1;
         break;
       }
     }
