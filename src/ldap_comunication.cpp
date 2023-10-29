@@ -60,7 +60,6 @@ BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode) {
   return envelope;
 }
 
-
 int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code) {
   int err = 0;
@@ -87,11 +86,68 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
   return 0;
 }
 
+/**
+ * @brief Checks if search request is valid
+ *
+ * @param searchRequest
+ * @return int
+ */
+int checkSearchRequest(BerObject *searchRequest) {
+
+  // use dynamic casts
+  BerSequenceObject *envelope =
+      dynamic_cast<BerSequenceObject *>(searchRequest);
+  if (envelope == nullptr) {
+    return -1;
+  }
+  // check count of object inside envelope
+  if (envelope->objects.size() != 2) {
+    return -1;
+  }
+  BerIntObject *messageID = dynamic_cast<BerIntObject *>(envelope->objects[0]);
+  BerSequenceObject *searchRequestSequence =
+      dynamic_cast<BerSequenceObject *>(envelope->objects[1]);
+  if (searchRequestSequence == nullptr) {
+    return -1;
+  }
+  // check count of object inside searchRequestSequence
+  if (searchRequestSequence->objects.size() != 8) {
+    return -1;
+  }
+  BerStringObject *baseObject =
+      dynamic_cast<BerStringObject *>(searchRequestSequence->objects[0]);
+  BerEnumObject *scope =
+      dynamic_cast<BerEnumObject *>(searchRequestSequence->objects[1]);
+  BerEnumObject *derefAliases =
+      dynamic_cast<BerEnumObject *>(searchRequestSequence->objects[2]);
+  BerIntObject *sizeLimit =
+      dynamic_cast<BerIntObject *>(searchRequestSequence->objects[3]);
+  BerIntObject *timeLimit =
+      dynamic_cast<BerIntObject *>(searchRequestSequence->objects[4]);
+  BerBoolObject *typesOnly =
+      dynamic_cast<BerBoolObject *>(searchRequestSequence->objects[5]);
+  BerUndefinedObject *filter =
+      dynamic_cast<BerUndefinedObject *>(searchRequestSequence->objects[6]);
+  BerSequenceObject *attributes =
+      dynamic_cast<BerSequenceObject *>(searchRequestSequence->objects[7]);
+
+  if (messageID == nullptr || baseObject == nullptr || scope == nullptr ||
+      derefAliases == nullptr || sizeLimit == nullptr || timeLimit == nullptr ||
+      typesOnly == nullptr || filter == nullptr || attributes == nullptr) {
+    return -1;
+  }
+  return 0;
+}
+
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath) {
-  int err = 0;
 
-  BerSequenceObject *envelope = (BerSequenceObject *)searchRequest;
+  if (checkSearchRequest(searchRequest) == -1) {
+    return -1;
+  }
+  int err = 0;
+  BerSequenceObject *envelope =
+      dynamic_cast<BerSequenceObject *>(searchRequest);
   BerIntObject *messageID = (BerIntObject *)envelope->objects[0];
   BerSequenceObject *searchRequestSequence =
       (BerSequenceObject *)envelope->objects[1];
@@ -112,9 +168,9 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
   sr.sizeLimit =
       ((BerIntObject *)searchRequestSequence->objects[3])->getValue();
-    std::vector<unsigned char> filtersBer = (searchRequestSequence->objects[6])->getBerRepresentation();
-  filter *f = convertToFilterObject(
-      filtersBer.begin(),filtersBer.end());
+  std::vector<unsigned char> filtersBer =
+      (searchRequestSequence->objects[6])->getBerRepresentation();
+  filter *f = convertToFilterObject(filtersBer.begin(), filtersBer.end());
   printf("filter type: %d\n", f->getFilterType());
 
   std::vector<DatabaseObject> result;
@@ -202,8 +258,11 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
           (buff[1] & 0x7F) <= resNow) { // checks if bytes containing lenght of
         // message are complete
         bindRequest.insert(bindRequest.end(), buff, buff + resNow);
-        lenghtOfMessage = GetLength(bindRequest.begin() + 1, &err, bindRequest.end()) +
-                          GetLengthOfLength(bindRequest.begin() + 1, &err, bindRequest.end()) + 1;
+        lenghtOfMessage =
+            GetLength(bindRequest.begin() + 1, &err, bindRequest.end()) +
+            GetLengthOfLength(bindRequest.begin() + 1, &err,
+                              bindRequest.end()) +
+            1;
         break;
       }
     }
