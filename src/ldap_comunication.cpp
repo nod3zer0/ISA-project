@@ -142,13 +142,23 @@ int checkSearchRequest(BerObject *searchRequest) {
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath) {
 
-  if (checkSearchRequest(searchRequest) == -1) {
-    return -1;
-  }
   int err = 0;
   BerSequenceObject *envelope =
       dynamic_cast<BerSequenceObject *>(searchRequest);
+      if (envelope == nullptr) {
+    return -1; //TODO send err
+      }
   BerIntObject *messageID = (BerIntObject *)envelope->objects[0];
+  if (messageID == nullptr) {
+    return -1; //TODO send err
+  }
+
+  if (checkSearchRequest(searchRequest) == -1) {
+
+    sendSearchResultDone((BerSequenceObject *)envelope, comm_socket,
+                         BER_LDAP_SIZE_LIMIT_EXCEEDED);
+  }
+
   BerSequenceObject *searchRequestSequence =
       (BerSequenceObject *)envelope->objects[1];
 
