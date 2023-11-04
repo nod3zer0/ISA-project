@@ -3,6 +3,7 @@
 const unsigned int BER_TAG_LENGTH = 1;
 const unsigned int BER_LENGTH_OF_LENGTH_TAG = 1;
 const unsigned int BER_4BYTE_LENGTH_LENGTH = 4;
+const unsigned int BER_EXTENDED_RESPONSE_C = 0x78;
 const unsigned int BER_BIND_REQUEST_C = 0x60;
 const unsigned int BER_BIND_RESPONSE_C = 0x61;
 const unsigned int BER_SEARCH_REQUEST_C = 0x63;
@@ -24,6 +25,7 @@ const unsigned int BER_LDAP_SUCCESS = 0x00;
 const unsigned int BER_LDAP_PROTOCOL_ERROR = 0x02;
 const unsigned int BER_LDAP_SIZE_LIMIT_EXCEEDED = 0x04;
 const unsigned int BER_LDAP_AUTH_METHOD_NOT_SUPPORTED = 0x07;
+
 
 
 #endif

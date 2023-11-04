@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/resource.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -34,7 +35,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
-#include <string>
 
 typedef struct searchedAttributes {
   bool cn;
@@ -73,6 +73,7 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code);
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath);
+int sendNoticeOfDisconnection(int com_socket, char errCode);
 int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 
 int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,

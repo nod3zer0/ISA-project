@@ -139,18 +139,41 @@ int checkSearchRequest(BerObject *searchRequest) {
   return 0;
 }
 
+int sendNoticeOfDisconnection(int comSocket, char errCode) {
+  BerSequenceObject *envelope = new BerSequenceObject();
+  envelope->objects.push_back(new BerIntObject(0));
+  BerSequenceObject *extendedResp =
+      new BerSequenceObject(BER_EXTENDED_RESPONSE_C);
+  envelope->objects.push_back(extendedResp);
+  extendedResp->objects.push_back(new BerEnumObject(errCode));
+  extendedResp->objects.push_back(
+      new BerStringObject("1.3.6.1.4.1.1466.20036"));
+  extendedResp->objects.push_back(new BerStringObject(""));
+  std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
+  // print hex of envelope
+#ifdef DEBUG
+  printf("envelopeBer: ");
+  for (unsigned long int i = 0; i < envelopeBer.size(); i++) {
+    printf("%02x ", envelopeBer[i]);
+    fflush(stdout);
+  }
+#endif
+  send(comSocket, &envelopeBer[0], envelopeBer.size(), 0);
+  return 0;
+}
+
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath) {
 
   int err = 0;
   BerSequenceObject *envelope =
       dynamic_cast<BerSequenceObject *>(searchRequest);
-      if (envelope == nullptr) {
-    return -1; //TODO send err
-      }
+  if (envelope == nullptr) {
+    sendNoticeOfDisconnection(comm_socket, BER_LDAP_PROTOCOL_ERROR);
+  }
   BerIntObject *messageID = (BerIntObject *)envelope->objects[0];
   if (messageID == nullptr) {
-    return -1; //TODO send err
+    sendNoticeOfDisconnection(comm_socket, BER_LDAP_PROTOCOL_ERROR);
   }
 
   if (checkSearchRequest(searchRequest) == -1) {

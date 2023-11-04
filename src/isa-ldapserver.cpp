@@ -130,56 +130,7 @@ int main(int argc, const char *argv[]) {
     // load envelope
     int err = 0;
     std::vector<unsigned char> envelope;
-    // err = loadEnvelope(envelope, commSocket);
-    // if (err == -1) {
-    //   printf("connection closed\n");
-    //   close(commSocket);
-    //   exit(0);
-    // }
-    // BerObject *EnvelopeObject =
-    //     ParseBerObject(envelope.begin(), &err, envelope.end());
-    // CHECK_ERR(err, "error parsing envelope");
 
-    // Check if message is bind request
-    // if (((BerSequenceObject *)((BerSequenceObject *)EnvelopeObject)->objects[1])
-    //         ->GetTag() != BER_BIND_REQUEST_C) {
-    //   printf("invalid message\n");
-    //   BerObject *berBindResponse =
-    //       CreateBindResponse(EnvelopeObject, BER_LDAP_PROTOCOL_ERROR);
-    //   std::vector<unsigned char> bindResponse =
-    //       berBindResponse->getBerRepresentation();
-    //   send(commSocket, &bindResponse[0], bindResponse.size(), 0);
-    //   close(commSocket);
-    //   exit(0);
-    // }
-
-    // // check for correct auth method
-    // BerUndefinedObject *authMethod =
-    //     (BerUndefinedObject *)((BerSequenceObject *)((BerSequenceObject *)
-    //                                                      EnvelopeObject)
-    //                                ->objects[1])
-    //         ->objects[2];
-    // std::vector<unsigned char> authMethodValue = authMethod->getBerRepresentation();
-
-    // if (authMethodValue[0] != 0x80 && authMethodValue[1] != 0x00) {
-    //   printf("invalid auth method\n");
-    //   BerObject *berBindResponse =
-    //       CreateBindResponse(EnvelopeObject, BER_LDAP_AUTH_METHOD_NOT_SUPPORTED);
-    //   std::vector<unsigned char> bindResponse =
-    //       berBindResponse->getBerRepresentation();
-    //   send(commSocket, &bindResponse[0], bindResponse.size(), 0);
-    //   close(commSocket);
-    //   exit(0);
-    // }
-
-    // // send bind response
-    // BerObject *berBindResponse =
-    //     CreateBindResponse(EnvelopeObject, BER_LDAP_SUCCESS);
-    // std::vector<unsigned char> bindResponse =
-    //     berBindResponse->getBerRepresentation();
-    // send(commSocket, &bindResponse[0], bindResponse.size(), 0);
-
-    // handle incoming messages
     while (1) {
       envelope.clear();
       int err = loadEnvelope(envelope, commSocket);
@@ -211,23 +162,25 @@ int main(int argc, const char *argv[]) {
         close(commSocket);
         exit(0);
         break;
-      case 0x60:{
-       //send bind response
+      case 0x60: {
+        // send bind response
         BerObject *berBindResponse =
             CreateBindResponse(EnvelopeObject, BER_LDAP_SUCCESS);
-        std::vector<unsigned char> bindResponse = berBindResponse->getBerRepresentation();
-        //check for correct auth method
+        std::vector<unsigned char> bindResponse =
+            berBindResponse->getBerRepresentation();
+        // check for correct auth method
         BerUndefinedObject *authMethod =
             (BerUndefinedObject *)((BerSequenceObject *)((BerSequenceObject *)
                                                              EnvelopeObject)
                                        ->objects[1])
                 ->objects[2];
-        std::vector<unsigned char> authMethodValue = authMethod->getBerRepresentation();
+        std::vector<unsigned char> authMethodValue =
+            authMethod->getBerRepresentation();
 
         if (authMethodValue[0] != 0x80 && authMethodValue[1] != 0x00) {
           printf("invalid auth method\n");
-          BerObject *berBindResponse =
-              CreateBindResponse(EnvelopeObject, BER_LDAP_AUTH_METHOD_NOT_SUPPORTED);
+          BerObject *berBindResponse = CreateBindResponse(
+              EnvelopeObject, BER_LDAP_AUTH_METHOD_NOT_SUPPORTED);
           std::vector<unsigned char> bindResponse =
               berBindResponse->getBerRepresentation();
           send(commSocket, &bindResponse[0], bindResponse.size(), 0);
@@ -235,9 +188,9 @@ int main(int argc, const char *argv[]) {
           exit(0);
         }
 
-
         send(commSocket, &bindResponse[0], bindResponse.size(), 0);
-        break;}
+        break;
+      }
       default:
         printf("unknown request\n");
         close(commSocket);

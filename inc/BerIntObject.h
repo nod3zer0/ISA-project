@@ -16,6 +16,7 @@ public:
   long long int getLenght();
   std::vector<unsigned char> getBerRepresentation();
   BerIntObject();
+  BerIntObject(int value);
 };
 
 #endif

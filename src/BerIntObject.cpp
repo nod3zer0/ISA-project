@@ -14,6 +14,7 @@ std::vector<unsigned char> BerIntObject::getBerRepresentation() {
 }
 
 BerIntObject::BerIntObject() { value = 0; }
+BerIntObject::BerIntObject(int value) { this->value = value; }
 
 int BerIntObject::getValue() { return value; }
 
