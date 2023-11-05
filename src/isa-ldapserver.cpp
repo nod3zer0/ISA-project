@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #define DEBUG
+#define TESTING
 
 // Macro for printing err message and closing socket when err != 0
 #define CHECK_ERR(err, msg)                                                    \
@@ -61,6 +62,8 @@ void SigCatcher(int n) {
   int pid = wait3(NULL, WNOHANG, NULL);
   printf("Child %d died.\n", pid);
 }
+
+#ifndef TESTING
 
 int main(int argc, const char *argv[]) {
   int returnCode;
@@ -208,3 +211,4 @@ int main(int argc, const char *argv[]) {
   }
   // }
 }
+#endif
