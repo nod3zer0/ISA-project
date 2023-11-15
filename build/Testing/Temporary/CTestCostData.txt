@@ -1,0 +1,3 @@
+InitSearchResultEntry.BasicTests 2 0
+---
+InitSearchResultEntry.BasicTests

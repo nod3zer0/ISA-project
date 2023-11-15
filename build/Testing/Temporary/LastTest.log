@@ -1,0 +1,40 @@
+Start testing: Nov 05 19:09 CET
+----------------------------------------------------------
+1/1 Testing: InitSearchResultEntry.BasicTests
+1/1 Test: InitSearchResultEntry.BasicTests
+Command: "/home/nod3zer0/Skola/Vysoka/5.semestr/ISA/LDAP-new/build/isa-ldapserver" "--gtest_filter=InitSearchResultEntry.BasicTests"
+Directory: /home/nod3zer0/Skola/Vysoka/5.semestr/ISA/LDAP-new/build
+"InitSearchResultEntry.BasicTests" start time: Nov 05 19:09 CET
+Output:
+----------------------------------------------------------
+Running main() from /home/nod3zer0/Skola/Vysoka/5.semestr/ISA/LDAP-new/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = InitSearchResultEntry.BasicTests
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from InitSearchResultEntry
+[ RUN      ] InitSearchResultEntry.BasicTests
+/home/nod3zer0/Skola/Vysoka/5.semestr/ISA/LDAP-new/tests/tests.cpp:31: Failure
+Expected equality of these values:
+  envelope->getBerObjectType()
+    Which is: 0
+  berStringObject
+    Which is: 2
+[  FAILED  ] InitSearchResultEntry.BasicTests (0 ms)
+[----------] 1 test from InitSearchResultEntry (0 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (0 ms total)
+[  PASSED  ] 0 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] InitSearchResultEntry.BasicTests
+
+ 1 FAILED TEST
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Failed.
+"InitSearchResultEntry.BasicTests" end time: Nov 05 19:09 CET
+"InitSearchResultEntry.BasicTests" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 05 19:09 CET
