@@ -15,7 +15,7 @@ std::vector<unsigned char> BerEnumObject::getBerRepresentation() {
   int err = 0;
   std::vector<unsigned char> berRepresentation;
   berRepresentation.push_back(BER_ENUM_C);
-  AppendLenght4Bytes(berRepresentation, ENUM_DATA_LENGTH, &err);
+  AppendLenght4Bytes(berRepresentation, ENUM_DATA_LENGTH);
   berRepresentation.push_back(value);
   return berRepresentation;
 }

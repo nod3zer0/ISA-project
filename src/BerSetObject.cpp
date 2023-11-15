@@ -25,7 +25,7 @@ std::vector<unsigned char> BerSetObject::getBerRepresentation() {
   }
 
   berRepresentation.push_back(BER_SET_C);
-  AppendLenght4Bytes(berRepresentation, dataLenght, &err);
+  AppendLenght4Bytes(berRepresentation, dataLenght);
   for (long long int  i = 0; i < objects.size(); i++) {
     std::vector<unsigned char> objectRepresentation =
         objects[i]->getBerRepresentation();

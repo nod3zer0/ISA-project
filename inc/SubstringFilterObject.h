@@ -4,7 +4,7 @@
 #include "inc/FilterObject.h"
 #include <vector>
 
-class SubstringFilter : public filter {
+class SubstringFilter : public FilterObject {
 
 private:
   std::vector<unsigned char> attributeDescription;

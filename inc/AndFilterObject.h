@@ -6,9 +6,9 @@
 #include <vector>
 
 
-class andFilter : public filter {
+class andFilter : public FilterObject {
 public:
-  std::vector<filter *> filters;
+  std::vector<FilterObject *> filters;
   filterTypes getFilterType();
 };
 

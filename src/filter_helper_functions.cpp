@@ -72,7 +72,7 @@ bool equalityMatchHandler(equalityMatchFilter *emf, int *err,
   return false;
 }
 
-bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
+bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
 
   // cn
   std::vector<unsigned char> cn = {'c', 'n'};
@@ -150,7 +150,7 @@ bool filterLine(filter *f, int *err, DatabaseObject &databaseEntry) {
 }
 
 std::vector<DatabaseObject>
-filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
+filterHandler(FilterObject *f, int *err, const char *dbLocation, int sizeLimit) {
 
   std::vector<DatabaseObject> resultDB;
   int dbErr = 0;
@@ -194,10 +194,10 @@ filterHandler(filter *f, int *err, const char *dbLocation, int sizeLimit) {
   return resultDB;
 }
 
-filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
+FilterObject *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
                               std::vector<unsigned char>::iterator end) {
 
-  filter *f;
+  FilterObject *f;
   int err;
   int lenght = 0;
   int ll = 0;
@@ -209,7 +209,7 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
     lenght = GetLength(BERfilter + 1, &err, end);
 
     ll = GetLengthOfLength(BERfilter + 1, &err, end);
@@ -220,7 +220,7 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
     SkipTags(BERfilter, 1, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
 
     lenght = GetLength(BERfilter + 1, &err, end);
     ll = GetLengthOfLength(BERfilter + 1, &err, end);
@@ -239,7 +239,7 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
     std::vector<unsigned char> final;
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
     lenght = GetLength(BERfilter + 1, &err, end);
     ll = GetLengthOfLength(BERfilter + 1, &err, end);
 
@@ -249,12 +249,12 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
     SkipTags(BERfilter, 1, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
     int lenghtOfSequence = GetLength(BERfilter + 1, &err, end);
     int lenghtOflenOfSequence = GetLengthOfLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
 
     int currentBitPointer = 0;
     while (currentBitPointer < lenghtOfSequence + lenghtOflenOfSequence) {
@@ -295,12 +295,12 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
     for (int i = 0; i < lenght;) {
 
       if (err != 0)
-        return new filter();
-      filter *tmpF = convertToFilterObject(BERfilter, end);
+        return new FilterObject();
+      FilterObject *tmpF = convertToFilterObject(BERfilter, end);
       printf("filter type: %d\n", tmpF->getFilterType());
       fflush(stdout);
       ((andFilter *)f)->filters.push_back(tmpF);
@@ -315,12 +315,12 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
+      return new FilterObject();
 
     for (int i = 0; i < lenght;) {
       if (err != 0)
-        return new filter();
-      filter *tmpF = convertToFilterObject(BERfilter, end);
+        return new FilterObject();
+      FilterObject *tmpF = convertToFilterObject(BERfilter, end);
       ((orFilter *)f)->filters.push_back(tmpF);
       i += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
            GetLength(BERfilter + 1, &err, end);
@@ -333,13 +333,13 @@ filter *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
-      return new filter();
-    filter *tmpF = convertToFilterObject(BERfilter, end);
+      return new FilterObject();
+    FilterObject *tmpF = convertToFilterObject(BERfilter, end);
     ((notFilter *)f)->filter = tmpF;
     break;
   }
   default:
-    f = new filter();
+    f = new FilterObject();
     break;
   }
   // print values

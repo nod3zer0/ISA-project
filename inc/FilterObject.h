@@ -4,7 +4,11 @@
 
 #include <vector>
 
-class filter {
+/**
+ * @brief base class for all filter objects
+ *
+ */
+class FilterObject {
 public:
   virtual filterTypes getFilterType();
 };

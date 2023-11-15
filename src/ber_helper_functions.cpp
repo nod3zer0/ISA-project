@@ -224,17 +224,7 @@ void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
   start[4] = length;
 }
 
-void WriteLenght4Bytes(std::vector<unsigned char>::iterator &start, int value,
-                       int *err) {
-  start[1] = 0x84;
-  start[2] = value >> 24;
-  start[3] = value >> 16;
-  start[4] = value >> 8;
-  start[5] = value;
-}
-
-void AppendLenght4Bytes(std::vector<unsigned char> &start, int value,
-                        int *err) {
+void AppendLenght4Bytes(std::vector<unsigned char> &start, int value) {
   start.push_back(0x84); // size
   start.push_back(value >> 24);
   start.push_back(value >> 16);

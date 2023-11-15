@@ -11,7 +11,7 @@ std::vector<unsigned char> BerStringObject::getBerRepresentation() {
   int err = 0;
   std::vector<unsigned char> berRepresentation;
   berRepresentation.push_back(BER_OCTET_STRING_C);
-  AppendLenght4Bytes(berRepresentation, value.size(), &err);
+  AppendLenght4Bytes(berRepresentation, value.size());
   berRepresentation.insert(berRepresentation.end(), value.begin(), value.end());
   return berRepresentation;
 }

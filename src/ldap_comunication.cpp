@@ -1,9 +1,6 @@
 #include "inc/ldap_comunication.h"
 #define DEBUG
 
-/// @brief Inicializes and alocates partial empty attribute list
-/// @param partialAttributeList pointer to empty attribute list
-/// @return 0 if success, -1 if error
 BerObject *InitSearchResultEntry(BerObject *searchRequest,
                                  std::vector<unsigned char> LDAPDN) {
   BerSequenceObject *envelope = new BerSequenceObject();
@@ -98,13 +95,17 @@ int checkSearchRequest(BerObject *searchRequest) {
   BerSequenceObject *envelope =
       dynamic_cast<BerSequenceObject *>(searchRequest);
   if (envelope == nullptr) {
-    return -1;
+    return -2;
   }
   // check count of object inside envelope
   if (envelope->objects.size() != 2) {
     return -1;
   }
   BerIntObject *messageID = dynamic_cast<BerIntObject *>(envelope->objects[0]);
+  if (messageID == nullptr) {
+    return -2;
+  }
+
   BerSequenceObject *searchRequestSequence =
       dynamic_cast<BerSequenceObject *>(envelope->objects[1]);
   if (searchRequestSequence == nullptr) {
@@ -165,21 +166,17 @@ int sendNoticeOfDisconnection(int comSocket, char errCode) {
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath) {
 
-  int err = 0;
+  int err = checkSearchRequest(searchRequest);
   BerSequenceObject *envelope =
       dynamic_cast<BerSequenceObject *>(searchRequest);
-  if (envelope == nullptr) {
+  if (err == -2) {
     sendNoticeOfDisconnection(comm_socket, BER_LDAP_PROTOCOL_ERROR);
+    return -1;
   }
-  BerIntObject *messageID = (BerIntObject *)envelope->objects[0];
-  if (messageID == nullptr) {
-    sendNoticeOfDisconnection(comm_socket, BER_LDAP_PROTOCOL_ERROR);
-  }
-
-  if (checkSearchRequest(searchRequest) == -1) {
-
+  if (err == -1) {
     sendSearchResultDone((BerSequenceObject *)envelope, comm_socket,
                          BER_LDAP_SIZE_LIMIT_EXCEEDED);
+    return -1;
   }
 
   BerSequenceObject *searchRequestSequence =
@@ -203,7 +200,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
       ((BerIntObject *)searchRequestSequence->objects[3])->getValue();
   std::vector<unsigned char> filtersBer =
       (searchRequestSequence->objects[6])->getBerRepresentation();
-  filter *f = convertToFilterObject(filtersBer.begin(), filtersBer.end());
+  FilterObject *f = convertToFilterObject(filtersBer.begin(), filtersBer.end());
   printf("filter type: %d\n", f->getFilterType());
 
   std::vector<DatabaseObject> result;
@@ -230,6 +227,12 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     if (((BerStringObject *)attributesSequence->objects[i])->value == uid) {
       sr.attributes.uid = true;
     }
+  }
+  // if no attributes specified, return all
+  if (!sr.attributes.cn && !sr.attributes.email && !sr.attributes.uid) {
+    sr.attributes.cn = true;
+    sr.attributes.email = true;
+    sr.attributes.uid = true;
   }
   for (unsigned long int i = 0; i < result.size(); i++) {
     BerObject *searchResultEntry =

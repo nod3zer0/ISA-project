@@ -13,7 +13,14 @@
 #include "inc/BerUndefinedObject.h"
 #include <vector>
 
-
+/**
+ * @brief Parses BER and converts it to BerObject
+ *
+ * @param start  start of the BER
+ * @param err 1 if error, 0 if success
+ * @param end end of the array
+ * @return BerObject*
+ */
 BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
                           int *err,std::vector<unsigned char>::iterator end);
 

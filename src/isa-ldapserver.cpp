@@ -162,7 +162,7 @@ int main(int argc, const char *argv[]) {
         close(commSocket);
         exit(0);
         break;
-      case 0x60: {
+      case 0x60: { //bind request
         // send bind response
         BerObject *berBindResponse =
             CreateBindResponse(EnvelopeObject, BER_LDAP_SUCCESS);

@@ -5,9 +5,9 @@
 
 #include <vector>
 
-class notFilter : public filter {
+class notFilter : public FilterObject {
 public:
-  filter *filter;
+  FilterObject *filter;
   filterTypes getFilterType();
 };
 

@@ -10,6 +10,13 @@ typedef struct args_t {
   bool err;
 } argsT;
 
+/**
+ * @brief Parses the arguments from the command line for ldapserver
+ *
+ * @param argc count of arguments
+ * @param argv values of arguments
+ * @return argsT
+ */
 argsT parseArguments(int argc, char **argv);
 
 #endif

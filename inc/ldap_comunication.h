@@ -54,7 +54,7 @@ typedef enum { cn, email, uid } atributeDescriptions;
 //     int - sizeLimit
 //     int - timeLimit
 //     bool - typesOnly
-//     sequence - filter
+//     sequence - FilterObject
 //     sequence - attributes
 
 typedef struct searchRequest {
@@ -63,19 +63,80 @@ typedef struct searchRequest {
   searchedAttributesType attributes;
 } searchRequestType;
 
-/// @brief Inicializes and alocates partial empty attribute list
-/// @param partialAttributeList pointer to empty attribute list
-/// @return 0 if success, -1 if error
+/**
+ * @brief Initialize the search result entry envelope
+ *
+ * @param searchRequest search request envelope for which the search result entry
+ * @param LDAPDN LDAPDN of the entry
+ * @return BerObject*
+ */
+BerObject *InitSearchResultEntry(BerObject *searchRequest,
+                                 std::vector<unsigned char> LDAPDN);
 
-BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode);
+/**
+ * @brief Adds an attribute to the search result entry envelope
+ *
+ * @param envelope search result entry envelope
+ * @param attributeDescription
+ * @param attributeValue
+ * @return int
+ */
+int AddToSearchResultEntry(BerObject *envelope,
+                           std::vector<unsigned char> &attributeDescription,
+                           std::vector<unsigned char> &attributeValue);
+/**
+ * @brief checks if the search request is valid
+ *
+ * @param searchRequest
+ * @return int 0 if valid, -1 if inavalid application sequence, -2 if invalid message id or whole envelope
+ */
+int checkSearchRequest(BerObject *searchRequest);
 
-int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
-                         unsigned int result_code);
+/**
+ * @brief sends notice of disconnection to the client
+ *
+ * @param comSocket socket to send the notice to
+ * @param errCode error code
+ * @return int
+ */
+int sendNoticeOfDisconnection(int comSocket, char errCode);
+
+/**
+ * @brief sends search result entry to the client
+ *
+ * @param envelope search request envelope
+ * @param comSocket socket to send the envelope to
+ * @return int
+ */
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath);
-int sendNoticeOfDisconnection(int com_socket, char errCode);
-int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket);
 
-int copyMessageIDappend(std::vector<unsigned char>::iterator messageID,
-                        std::vector<unsigned char> &target);
+/**
+ * @brief Create a Bind Response object
+ *
+ * @param bindRequest
+ * @param resultCode
+ * @return BerObject*
+ */
+BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode);
+
+/**
+ * @brief loads the envelope from the client, waits until all the date are received
+ *
+ * @param bindRequest returns the envelope as a vector of unsigned chars
+ * @param comm_socket socket to receive the envelope from
+ * @return int 0 if success, -1 if error ocured
+ */
+int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) ;
+
+/**
+ * @brief sends the search result done envelope to the client
+ *
+ * @param searchRequest  search request envelope for which the search result done is
+ * @param comm_socket  socket to send the envelope to
+ * @param result_code
+ * @return int
+ */
+int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
+                         unsigned int result_code);
 #endif

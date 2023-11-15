@@ -6,6 +6,10 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief Object representing one row from database
+ *
+ */
 class DatabaseObject {
 private:
   std::vector<unsigned char> name;

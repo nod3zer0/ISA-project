@@ -5,7 +5,7 @@
 
 #include <vector>
 
-class equalityMatchFilter : public filter {
+class equalityMatchFilter : public FilterObject {
 private:
   std::vector<unsigned char> attributeDescription;
   std::vector<unsigned char> assertionValue;

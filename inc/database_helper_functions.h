@@ -7,6 +7,12 @@
 #include <vector>
 #include "inc/DatabaseObject.h"
 
+/**
+ * @brief Removes dupplicates from vector of DatabaseObjects
+ *
+ * @param input
+ * @return std::vector<DatabaseObject>
+ */
 std::vector<DatabaseObject> removeDuplicates(std::vector<DatabaseObject> input);
 
 #endif
