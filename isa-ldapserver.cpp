@@ -51,7 +51,7 @@ typedef enum { cn, email, uid } atributeDescriptions;
 //     int - sizeLimit
 //     int - timeLimit
 //     bool - typesOnly
-//     sequence - filter
+//     sequence - FilterObject
 //     sequence - attributes
 
 typedef struct searchRequest {
@@ -335,7 +335,7 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   //        int - sizeLimit
   //        int - timeLimit
   //        bool - typesOnly
-  //        sequence - filter
+  //        sequence - FilterObject
   //        sequence - attributes
   searchRequestType sr;
   // inicialization TODO make constructor
@@ -364,7 +364,7 @@ int searchRequestHandler(unsigned char *searchRequest, int comm_socket) {
   skipLength += searchRequest[skipLength + 1] + 2; // skip int sizeLimit
   skipLength += searchRequest[skipLength + 1] + 2; // skip int timeLimit
   skipLength += searchRequest[skipLength + 1] + 2; // skip bool typesOnly
-  skipLength += searchRequest[skipLength + 1] + 2; // skip sequence filter
+  skipLength += searchRequest[skipLength + 1] + 2; // skip sequence FilterObject
   // skipLength += searchRequest[skipLength + 1] + 2; // skip sequence
   // attributes
 
@@ -632,7 +632,7 @@ int main(int argc, const char *argv[]) {
       //                 sizeLimit       INTEGER (0 .. maxInt),
       //                 timeLimit       INTEGER (0 .. maxInt),
       //                 typesOnly       BOOLEAN,
-      //                 filter          Filter,
+      //                 FilterObject          Filter,
       //                 attributes      AttributeDescriptionList }
 
       //         Filter ::= CHOICE {
