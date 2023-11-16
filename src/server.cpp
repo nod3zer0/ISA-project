@@ -38,6 +38,13 @@ void SigQuitCatcher(int n) {
   exit(0);
 }
 
+/**
+ * @brief Ldap server, This part was inspired by the example from stubs demo tcp server https://git.fit.vutbr.cz/NESFIT/IPK-Projekty/src/branch/master/Stubs/cpp/DemoTcp by Vladimir Vesely Ph.D.
+ *
+ * @param port port to listen on
+ * @param dbPath path to database file
+ * @return int
+ */
 int ldapServer(int port, char *dbPath) {
   int returnCode;
 
