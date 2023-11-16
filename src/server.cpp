@@ -10,9 +10,9 @@ int childSocket = 0;
 int communicationSocket;
 std::vector<int> children = {};
 
-
 /**
- * @brief signal handler for main process, when SIGINT is received, it kills all children and closes the socket
+ * @brief signal handler for main process, when SIGINT is received, it kills all
+ * children and closes the socket
  *
  * @param n
  */
@@ -27,7 +27,8 @@ void SigIntCatcher(int n) {
 }
 
 /**
- * @brief signal handler for child process, when SIGQUIT is received, it closes the socket and exits
+ * @brief signal handler for child process, when SIGQUIT is received, it closes
+ * the socket and exits
  *
  * @param n
  */
@@ -40,16 +41,16 @@ void SigQuitCatcher(int n) {
 int ldapServer(int port, char *dbPath) {
   int returnCode;
 
-  struct sockaddr_in6 sa;
-  struct sockaddr_in6 clientSA;
+  struct sockaddr_in6 sa = {0};
+  struct sockaddr_in6 clientSA = {0};
   char str[INET6_ADDRSTRLEN];
   socklen_t ClientSALen = sizeof(clientSA);
   if ((communicationSocket = socket(PF_INET6, SOCK_STREAM, 0)) < 0) {
     perror("socket() failed");
     exit(EXIT_FAILURE);
   }
-  returnCode =
-      setsockopt(communicationSocket, IPPROTO_IPV6, IPV6_V6ONLY, (char *)&sa, sizeof(sa));
+  returnCode = setsockopt(communicationSocket, IPPROTO_IPV6, IPV6_V6ONLY,
+                          (char *)&sa, sizeof(sa));
 
   if (returnCode < 0) {
     perror("setsockopt() failed");
@@ -77,7 +78,7 @@ int ldapServer(int port, char *dbPath) {
     perror("listen() failed");
     exit(EXIT_FAILURE);
   }
-    //setup signal handlers
+  // setup signal handlers
   signal(SIGINT, SigIntCatcher);
   signal(SIGCHLD, SigCatcher);
   signal(SIGQUIT, SigQuitCatcher);
@@ -134,8 +135,7 @@ int ldapServer(int port, char *dbPath) {
 
         GoIntoTag(envelopeTagPointer, &err, envelope.end());
         CHECK_ERR(err, "error going into tag");
-        SkipTags(envelopeTagPointer, 1, &err,
-                 envelope.end());
+        SkipTags(envelopeTagPointer, 1, &err, envelope.end());
         CHECK_ERR(err, "error skipping tags");
         BerObject *EnvelopeObject =
             ParseBerObject(envelope.begin(), &err, envelope.end());

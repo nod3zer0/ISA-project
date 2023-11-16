@@ -37,7 +37,8 @@ filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
 //  * @param s start of the integer in char array
 //  * @return int - parsed integer
 //  */
-unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err, std::vector<unsigned char>::iterator end) {
+unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err,
+                      std::vector<unsigned char>::iterator end) {
   unsigned int value = 0;
   int length = GetLength(s + 1, err, end);
   int lengthLength = GetLengthOfLength(s + 1, err, end);
@@ -126,7 +127,14 @@ unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err, std::vec
  * @param err error code
  * @return number of bytes that takes to necode length of data in BER
  */
-int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err, std::vector<unsigned char>::iterator end) {
+int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,
+                      std::vector<unsigned char>::iterator end) {
+
+  if (std::distance(start, end) < 1) {
+    *err = 1;
+    return 0;
+  }
+
   int length = 0;
   if ((start[0] >> 7) != 1) { // if first bit is 0 -> shortform
     length = 1;
@@ -145,8 +153,13 @@ int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err, std:
  * @param err error code, err 1 if length is longer than 4 bytes
  * @return length of the data (without tag and lenght bytes)
  */
-int GetLength(std::vector<unsigned char>::iterator start,
-                int *err, std::vector<unsigned char>::iterator end) { // TODO doesnt work
+int GetLength(std::vector<unsigned char>::iterator start, int *err,
+              std::vector<unsigned char>::iterator end) {
+  if (std::distance(start, end) < 1) {
+    *err = 1;
+    return 0;
+  }
+
   int length = 0;
   if ((start[0] >> 7) != 1) { // if first bit is 0 -> shortform
     length = start[0];
@@ -154,12 +167,12 @@ int GetLength(std::vector<unsigned char>::iterator start,
   } else {
     int lengthOfLength = start[0] & 0x7F; // remove bit indicating longform
 
-    if(lengthOfLength > std::distance(start, end)){ //array is too short
+    if (lengthOfLength > std::distance(start, end)) { // array is too short
       *err = 1;
       return 0;
     }
-    if (lengthOfLength > 4 &&
-        start[lengthOfLength - 4] > 0x00) { // only support up to 4 bytes, more is
+    if (lengthOfLength > 4 && start[lengthOfLength - 4] >
+                                  0x00) { // only support up to 4 bytes, more is
                                           // not necessary for this project
       *err = 1;
       return 0;
@@ -189,7 +202,7 @@ void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
   int i = 0;
   int jumpLength = 1;
   while (i < n) {
-    if(std::distance(start, end) < jumpLength){
+    if (std::distance(start, end) < jumpLength) {
       *err = 1;
       return;
     }
