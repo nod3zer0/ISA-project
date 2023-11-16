@@ -8,6 +8,7 @@
 #include "inc/BerStringObject.h"
 #include "inc/DatabaseObject.h"
 #include "inc/FilterObject.h"
+#include "inc/argument_helper_functions.h"
 #include "inc/ldap_comunication.h"
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -51,11 +52,10 @@ void SigIntCatcher(int n) {
 void SigQuitCatcher(int n) {
   printf("Dying. %d\n", childSocket);
   close(childSocket);
-  sleep(2000);
   exit(0);
 }
 
-int ldapServer(int port) {
+int ldapServer(int port, char *dbPath) {
   int returnCode;
 
   struct sockaddr_in6 sa;
@@ -67,13 +67,13 @@ int ldapServer(int port) {
     exit(EXIT_FAILURE);
   }
 
-  returnCode = setsockopt(communicationSocket, SOL_SOCKET, SO_REUSEADDR,
-                          (char *)&sa, sizeof(sa));
-  if (returnCode < 0) {
-    perror("setsockopt() failed");
-    close(communicationSocket);
-    exit(-1);
-  }
+    returnCode = setsockopt(communicationSocket, SOL_SOCKET, SO_REUSEADDR,
+                            (char *)&sa, sizeof(sa));
+    if (returnCode < 0) {
+      perror("setsockopt() failed");
+      close(communicationSocket);
+      exit(-1);
+    }
 
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
@@ -131,11 +131,10 @@ int ldapServer(int port) {
       int err = 0;
       std::vector<unsigned char> envelope;
 
-
       while (1) {
         envelope.clear();
-        int err = loadEnvelope(envelope, childSocket);
-        if (err == -1) {
+        int lenghtOfEnvelope = loadEnvelope(envelope, childSocket);
+        if (lenghtOfEnvelope == -1) {
           printf("connection closed\n");
           close(childSocket);
           exit(0);
@@ -155,8 +154,7 @@ int ldapServer(int port) {
         switch (envelopeTagPointer[0]) {
         case 0x63:
           printf("search request\n");
-          searchRequestHandler(EnvelopeObject, childSocket,
-                               "ldap-lidi-ascii.csv");
+          searchRequestHandler(EnvelopeObject, childSocket, dbPath);
           break;
         case 0x62: // unbind request TODO: handle unbind
           printf("unbind request\n");
@@ -211,4 +209,13 @@ int ldapServer(int port) {
   }
 }
 
-int main(int argc, const char *argv[]) { ldapServer(10013); }
+int main(int argc, const char *argv[]) {
+
+  args_t args = parseArguments(argc, argv);
+
+  if (args.err) {
+    fprintf(stderr, "Error parsing arguments\n");
+    return 1;
+  }
+  ldapServer(args.port, args.dbPath);
+}

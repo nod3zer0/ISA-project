@@ -17,6 +17,6 @@ typedef struct args_t {
  * @param argv values of arguments
  * @return argsT
  */
-argsT parseArguments(int argc, char **argv);
+argsT parseArguments(int argc,const char **argv);
 
 #endif

@@ -1,10 +1,10 @@
 #include "inc/argument_helper_functions.h"
 
-
-argsT parseArgs(int argc, const char *argv[]) {
+argsT parseArguments(int argc, const char **argv) {
 
   // initialize args
   argsT args;
+  args.err = false;
   args.dbPath = (char *)malloc(sizeof(char) * 1000);
   args.port = 389;
 

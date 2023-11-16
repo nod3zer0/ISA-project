@@ -31,17 +31,6 @@ int AddToSearchResultEntry(BerObject *envelope,
   attributeValueSequence->objects.push_back(attributeValueSet);
 
   PartialAttributeList->objects.push_back(attributeValueSequence);
-
-  // debug print SearchResultEntry
-#ifdef DEBUG
-  std::vector<unsigned char> SearchResultEntryBer =
-      SearchResultEntry->getBerRepresentation();
-  printf("SearchResultEntryBer: ");
-  for (unsigned long int i = 0; i < SearchResultEntryBer.size(); i++) {
-    printf("%02x ", SearchResultEntryBer[i]);
-    fflush(stdout);
-  }
-#endif
   return 0;
 }
 
@@ -71,15 +60,6 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
 
   std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
   send(comm_socket, &envelopeBer[0], envelopeBer.size(), 0);
-  // print searchResultDoneSequenceBer hex
-
-#ifdef DEBUG
-  printf("searchResultDoneSequenceBer: ");
-  for (unsigned long int i = 0; i < envelopeBer.size(); i++) {
-    printf("%02x ", envelopeBer[i]);
-    fflush(stdout);
-  }
-#endif
   return 0;
 }
 
@@ -151,14 +131,6 @@ int sendNoticeOfDisconnection(int comSocket, char errCode) {
       new BerStringObject("1.3.6.1.4.1.1466.20036"));
   extendedResp->objects.push_back(new BerStringObject(""));
   std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
-  // print hex of envelope
-#ifdef DEBUG
-  printf("envelopeBer: ");
-  for (unsigned long int i = 0; i < envelopeBer.size(); i++) {
-    printf("%02x ", envelopeBer[i]);
-    fflush(stdout);
-  }
-#endif
   send(comSocket, &envelopeBer[0], envelopeBer.size(), 0);
   return 0;
 }
@@ -201,7 +173,6 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
   std::vector<unsigned char> filtersBer =
       (searchRequestSequence->objects[6])->getBerRepresentation();
   FilterObject *f = convertToFilterObject(filtersBer.begin(), filtersBer.end());
-  printf("filter type: %d\n", f->getFilterType());
 
   std::vector<DatabaseObject> result;
   int errr = 0;
@@ -255,14 +226,6 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     std::vector<unsigned char> searchResultEntryBer =
         searchResultEntry->getBerRepresentation();
     send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(), 0);
-    // debub print searchResultEntryBer hex
-#ifdef DEBUG
-    printf("searchResultEntryBer: ");
-    for (unsigned long int i = 0; i < searchResultEntryBer.size(); i++) {
-      printf("%02x ", searchResultEntryBer[i]);
-      fflush(stdout);
-    }
-#endif
   }
 
   if (sizeLimitExceeded) {
@@ -316,9 +279,9 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
 
     if (resAll > 0) {
       // check if message is envelope
-      if (buff[0] != 0x30) {
-        printf("invalid message\n");
-        // TODO respond with error message
+      if (bindRequest[0] != 0x30) {
+        sendNoticeOfDisconnection(comm_socket, BER_LDAP_PROTOCOL_ERROR);
+        err = -1;
         break;
       }
       int length = 0;

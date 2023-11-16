@@ -32,6 +32,11 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
     }
   }
 
+  if (sf->getSubInitial().empty() && sf->getSubFinal().empty()) {
+    attributeMiddle =
+        std::vector<unsigned char>(attribute.begin(), attribute.end());
+  }
+
   if (!sf->getSubInitial().empty() && attributeInital != sf->getSubInitial()) {
     return false;
   }
@@ -149,8 +154,9 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   return false;
 }
 
-std::vector<DatabaseObject>
-filterHandler(FilterObject *f, int *err, const char *dbLocation, int sizeLimit) {
+std::vector<DatabaseObject> filterHandler(FilterObject *f, int *err,
+                                          const char *dbLocation,
+                                          int sizeLimit) {
 
   std::vector<DatabaseObject> resultDB;
   int dbErr = 0;
@@ -194,8 +200,9 @@ filterHandler(FilterObject *f, int *err, const char *dbLocation, int sizeLimit) 
   return resultDB;
 }
 
-FilterObject *convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
-                              std::vector<unsigned char>::iterator end) {
+FilterObject *
+convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
+                      std::vector<unsigned char>::iterator end) {
 
   FilterObject *f;
   int err;
