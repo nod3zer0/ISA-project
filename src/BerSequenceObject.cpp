@@ -8,7 +8,7 @@ long long int BerSequenceObject::getLenght() {
 
   long long int dataLenght = 0;
 
-  for (long long int i = 0; i < objects.size(); i++) {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
     dataLenght += objects[i]->getLenght();
   }
 
@@ -17,16 +17,15 @@ long long int BerSequenceObject::getLenght() {
 }
 
 std::vector<unsigned char> BerSequenceObject::getBerRepresentation() {
-  int err = 0;
   std::vector<unsigned char> berRepresentation;
   long long int dataLenght = 0;
-  for (long long int  i = 0; i < objects.size(); i++) {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
     dataLenght += objects[i]->getLenght();
   }
 
   berRepresentation.push_back(tag);
   AppendLenght4Bytes(berRepresentation, dataLenght);
-  for (long long int  i = 0; i < objects.size(); i++) {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
     std::vector<unsigned char> objectRepresentation =
         objects[i]->getBerRepresentation();
     berRepresentation.insert(berRepresentation.end(),

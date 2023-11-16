@@ -146,7 +146,7 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
     bool result = !filterLine((nf->filter), err, databaseEntry);
     if (*err == 2)
       return false;
-    return true;
+    return result;
   } break;
   default:
     return false;
@@ -157,14 +157,19 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
 std::vector<DatabaseObject> filterHandler(FilterObject *f, int *err,
                                           const char *dbLocation,
                                           int sizeLimit) {
-
+  int x = 0;
   std::vector<DatabaseObject> resultDB;
   int dbErr = 0;
   DatabaseController db(dbLocation);
   int lineCounter = 0;
-  if (f->getFilterType() == undefined) {
+  if (f->getFilterType() == undefined) { // check if there is filter
     while (true) {
 
+      x++;
+      if (x >= 856) {
+        printf("x: %d\n", x);
+        fflush(stdout);
+      }
       DatabaseObject obj = db.loadNextRow(&dbErr);
 
       if (dbErr != 0)
@@ -349,14 +354,5 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
     f = new FilterObject();
     break;
   }
-  // print values
-  for (unsigned long int i = 0; i < attributeDescription.size(); i++) {
-    printf("%c", attributeDescription[i]);
-  }
-  printf("\n");
-  for (unsigned long int i = 0; i < assertionValue.size(); i++) {
-    printf("%c", assertionValue[i]);
-  }
-
   return f;
 }

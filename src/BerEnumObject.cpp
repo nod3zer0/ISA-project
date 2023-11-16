@@ -12,7 +12,6 @@ long long int BerEnumObject::getLenght() {
 
 std::vector<unsigned char> BerEnumObject::getBerRepresentation() {
   const int ENUM_DATA_LENGTH = 1;
-  int err = 0;
   std::vector<unsigned char> berRepresentation;
   berRepresentation.push_back(BER_ENUM_C);
   AppendLenght4Bytes(berRepresentation, ENUM_DATA_LENGTH);

@@ -117,13 +117,12 @@ BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
     berObject = new BerBoolObject(start[lenghtOfLenght + BER_TAG_LENGTH]);
     break;
   }
-  default:
+  default: // filters and other types
     std::vector<unsigned char> berVector = std::vector<unsigned char>(
         start, start + GetLengthOfLength(start+1, err, end) + BER_TAG_LENGTH +
                    GetLength(start + 1, err, end));
     berObject = new BerUndefinedObject(berVector);
 
-    printf("unknown tag: %x\n", tag);
     break;
   }
   return berObject;

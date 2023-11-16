@@ -26,8 +26,8 @@ DatabaseObject DatabaseController::loadNextRow(int *err) {
   if (file.eof()) {
     *err = 1;
     return DatabaseObject(std::vector<unsigned char>(),
-                           std::vector<unsigned char>(),
-                           std::vector<unsigned char>());
+                          std::vector<unsigned char>(),
+                          std::vector<unsigned char>());
   }
 
   std::vector<unsigned char> name;
@@ -37,6 +37,12 @@ DatabaseObject DatabaseController::loadNextRow(int *err) {
   // read csv line
   std::string line;
   std::getline(file, line);
+  if (line == "") {
+    *err = 1;
+    return DatabaseObject(std::vector<unsigned char>(),
+                          std::vector<unsigned char>(),
+                          std::vector<unsigned char>());
+  }
   std::stringstream ss(line);
   std::string token;
   std::getline(ss, token, ';');

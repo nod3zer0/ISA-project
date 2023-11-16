@@ -8,7 +8,6 @@ long long int BerStringObject::getLenght() {
 }
 
 std::vector<unsigned char> BerStringObject::getBerRepresentation() {
-  int err = 0;
   std::vector<unsigned char> berRepresentation;
   berRepresentation.push_back(BER_OCTET_STRING_C);
   AppendLenght4Bytes(berRepresentation, value.size());

@@ -17,7 +17,6 @@ BerObject *InitSearchResultEntry(BerObject *searchRequest,
 int AddToSearchResultEntry(BerObject *envelope,
                            std::vector<unsigned char> &attributeDescription,
                            std::vector<unsigned char> &attributeValue) {
-  int err = 0;
   BerSequenceObject *SearchResultEntry =
       (BerSequenceObject *)(((BerSequenceObject *)envelope)->objects[1]);
   BerSequenceObject *PartialAttributeList =
@@ -48,7 +47,6 @@ BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode) {
 
 int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code) {
-  int err = 0;
   BerSequenceObject *envelope = new BerSequenceObject();
   envelope->objects.push_back(searchRequest->objects[0]); // copy message ID
   BerSequenceObject *searchResultDoneSequence =
@@ -187,7 +185,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
   BerSequenceObject *attributesSequence =
       (BerSequenceObject *)searchRequestSequence->objects[7];
 
-  for (int i = 0; i < attributesSequence->objects.size(); i++) {
+  for (long unsigned int i = 0; i < attributesSequence->objects.size(); i++) {
 
     if (((BerStringObject *)attributesSequence->objects[i])->value == cn) {
       sr.attributes.cn = true;
