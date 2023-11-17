@@ -53,15 +53,12 @@ void SigQuitCatcher(int n) {
  */
 int ldapServer(int port, char *dbPath) {
   int returnCode;
-
-  struct sockaddr_in6 sa = {0};
-  struct sockaddr_in6 clientSA = {0};
-  char str[INET6_ADDRSTRLEN];
-  socklen_t ClientSALen = sizeof(clientSA);
+  // starting main socket
   if ((communicationSocket = socket(PF_INET6, SOCK_STREAM, 0)) < 0) {
     perror("socket() failed");
     exit(EXIT_FAILURE);
   }
+  // setting options for main socket
   const int enable = 1;
   const int disable = 1;
   returnCode = setsockopt(communicationSocket, IPPROTO_IPV6, IPV6_V6ONLY,
@@ -87,6 +84,11 @@ int ldapServer(int port, char *dbPath) {
     exit(1);
   }
 
+  // setting up main socket
+  struct sockaddr_in6 sa = {0};
+  struct sockaddr_in6 clientSA = {0};
+  char str[INET6_ADDRSTRLEN];
+  socklen_t ClientSALen = sizeof(clientSA);
   memset(&sa, 0, sizeof(sa));
   sa.sin6_family = AF_INET6;
   sa.sin6_addr = in6addr_any;
@@ -105,7 +107,9 @@ int ldapServer(int port, char *dbPath) {
   signal(SIGCHLD, SigCatcher);
   signal(SIGQUIT, SigQuitCatcher);
 
+  // main loop
   while (1) {
+    //seting up child socket
     childSocket =
         accept(communicationSocket, (struct sockaddr *)&clientSA, &ClientSALen);
     int flags = fcntl(communicationSocket, F_GETFL, 0);
@@ -122,6 +126,7 @@ int ldapServer(int port, char *dbPath) {
     if (childSocket <= 0)
       continue;
 
+    //spliting into child process and parent process
     int pid = fork();
     if (pid < 0) {
       perror("fork() failed");
@@ -141,7 +146,6 @@ int ldapServer(int port, char *dbPath) {
       // load envelope
       int err = 0;
       std::vector<unsigned char> envelope;
-
       while (1) {
         envelope.clear();
         int lenghtOfEnvelope = loadEnvelope(envelope, childSocket);

@@ -4,7 +4,10 @@
 BerObject *InitSearchResultEntry(BerObject *searchRequest,
                                  std::vector<unsigned char> LDAPDN) {
   BerSequenceObject *envelope = new BerSequenceObject();
-  envelope->objects.push_back(new BerIntObject(static_cast<BerIntObject*>(static_cast<BerSequenceObject*>(searchRequest)->objects[0])->getValue())); // copy message ID
+  envelope->objects.push_back(new BerIntObject(
+      static_cast<BerIntObject *>(
+          static_cast<BerSequenceObject *>(searchRequest)->objects[0])
+          ->getValue())); // copy message ID
   BerSequenceObject *PartialAttributeList =
       new BerSequenceObject(BER_SEARCH_RESULT_ENTRY_C);
   envelope->objects.push_back(PartialAttributeList);
@@ -47,7 +50,9 @@ BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode) {
 int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code) {
   BerSequenceObject *envelope = new BerSequenceObject();
-  envelope->objects.push_back(new BerIntObject(dynamic_cast<BerIntObject*>(searchRequest->objects[0])->getValue())); // copy message ID
+  envelope->objects.push_back(
+      new BerIntObject(dynamic_cast<BerIntObject *>(searchRequest->objects[0])
+                           ->getValue())); // copy message ID
   BerSequenceObject *searchResultDoneSequence =
       new BerSequenceObject(BER_SEARCH_RESULT_DONE_C);
   envelope->objects.push_back(searchResultDoneSequence);
@@ -136,6 +141,7 @@ int sendNoticeOfDisconnection(int comSocket, char errCode) {
 int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          const char *dbPath) {
 
+  // checks if search request is valid
   int err = checkSearchRequest(searchRequest);
   BerSequenceObject *envelope =
       dynamic_cast<BerSequenceObject *>(searchRequest);
@@ -148,12 +154,12 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
                          BER_LDAP_SIZE_LIMIT_EXCEEDED);
     return -1;
   }
-
+  // extracting searchRequestSequence from envelope
   BerSequenceObject *searchRequestSequence =
       (BerSequenceObject *)envelope->objects[1];
 
+  // inicialization of searchRequestType
   searchRequestType sr;
-  // inicialization TODO make constructor
   sr.sizeLimit = 0;
   sr.attributes.cn = false;
   sr.attributes.email = false;
@@ -166,22 +172,26 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
   // uid
   std::vector<unsigned char> uid = {'u', 'i', 'd'};
 
+  // getting size limit
   sr.sizeLimit =
       ((BerIntObject *)searchRequestSequence->objects[3])->getValue();
+  // getting filters and converting them to FilterObject
   std::vector<unsigned char> filtersBer =
       (searchRequestSequence->objects[6])->getBerRepresentation();
   FilterObject *f = convertToFilterObject(filtersBer.begin(), filtersBer.end());
 
+  // filtering database
   std::vector<DatabaseObject> result;
-  int errr = 0;
-  result = filterHandler(f, &errr, dbPath, sr.sizeLimit);
+  int err = 0;
+  result = filterHandler(f, &err, dbPath, sr.sizeLimit);
 
   result = removeDuplicates(result);
   bool sizeLimitExceeded = false;
-  if (errr == 1) {
+  if (err == 1) {
     sizeLimitExceeded = true;
   }
 
+  // getting attributes which should be returned
   BerSequenceObject *attributesSequence =
       (BerSequenceObject *)searchRequestSequence->objects[7];
 
@@ -203,6 +213,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     sr.attributes.email = true;
     sr.attributes.uid = true;
   }
+  // send search result entry for each entry in result
   for (unsigned long int i = 0; i < result.size(); i++) {
     BerObject *searchResultEntry =
         InitSearchResultEntry(envelope, result[i].get_uid());
@@ -227,6 +238,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     delete searchResultEntry;
   }
 
+  // send search result done
   if (sizeLimitExceeded) {
 
     sendSearchResultDone((BerSequenceObject *)envelope, comm_socket,

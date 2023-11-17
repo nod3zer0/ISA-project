@@ -1,11 +1,19 @@
 #include "inc/BerParser.h"
 
+/**
+ * @brief Parses BER encoded message and converts it to BerObject, it works recursively
+ *
+ * @param start  start of the BER
+ * @param err  1 if error, 0 if success
+ * @param end  end of the array
+ * @return BerObject*
+ */
 BerObject *ParseBerObject(std::vector<unsigned char>::iterator start,
                           int *err, std::vector<unsigned char>::iterator end) {
   BerObject *berObject;
 
   unsigned char tag = start[0];
-
+    // main switch for all types
   switch (tag) {
     {
     case BER_SEQUENCE_C:
