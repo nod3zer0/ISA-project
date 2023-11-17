@@ -33,6 +33,7 @@ void SigIntCatcher(int n) {
  * @param n
  */
 void SigQuitCatcher(int n) {
+  sendNoticeOfDisconnection(childSocket,BER_LDAP_UNAVAILABLE);
   printf("Dying. %d\n", childSocket);
   close(childSocket);
   exit(0);

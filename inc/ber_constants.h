@@ -23,6 +23,7 @@ const unsigned int BER_SET_C = 0x31;
 
 const unsigned int BER_LDAP_SUCCESS = 0x00;
 const unsigned int BER_LDAP_PROTOCOL_ERROR = 0x02;
+const unsigned int BER_LDAP_UNAVAILABLE = 0x34;
 const unsigned int BER_LDAP_SIZE_LIMIT_EXCEEDED = 0x04;
 const unsigned int BER_LDAP_AUTH_METHOD_NOT_SUPPORTED = 0x07;
 
