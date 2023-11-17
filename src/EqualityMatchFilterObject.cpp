@@ -1,18 +1,18 @@
 #include "inc/EqualityMatchFilterObject.h"
 
-equalityMatchFilter::equalityMatchFilter(
+EqualityMatchFilter::EqualityMatchFilter(
     std::vector<unsigned char> attributeDescription,
     std::vector<unsigned char> assertionValue) {
   this->attributeDescription = attributeDescription;
   this->assertionValue = assertionValue;
 };
 
-std::vector<unsigned char> equalityMatchFilter::getAttributeDescription() {
+std::vector<unsigned char> EqualityMatchFilter::getAttributeDescription() {
   return attributeDescription;
 };
 
-std::vector<unsigned char> equalityMatchFilter::getAssertionValue() {
+std::vector<unsigned char> EqualityMatchFilter::getAssertionValue() {
   return assertionValue;
 };
 
-filterTypes equalityMatchFilter::getFilterType() { return equalityMatch; };
+filterTypes EqualityMatchFilter::getFilterType() { return equalityMatch; };

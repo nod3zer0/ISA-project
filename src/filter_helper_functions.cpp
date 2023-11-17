@@ -69,7 +69,7 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
   return true;
 }
 
-bool equalityMatchHandler(equalityMatchFilter *emf, int *err,
+bool equalityMatchHandler(EqualityMatchFilter *emf, int *err,
                           std::vector<unsigned char> attribute) {
   if (emf->getAssertionValue() == attribute) {
     return true;
@@ -89,15 +89,15 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   switch (f->getFilterType()) {
   case equalityMatch: {
     std::vector<unsigned char> attributeDescription =
-        ((equalityMatchFilter *)f)->getAttributeDescription();
+        ((EqualityMatchFilter *)f)->getAttributeDescription();
     if (attributeDescription == cn) {
-      return equalityMatchHandler((equalityMatchFilter *)f, err,
+      return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_name());
     } else if (attributeDescription == email) {
-      return equalityMatchHandler((equalityMatchFilter *)f, err,
+      return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_email());
     } else if (attributeDescription == uid) {
-      return equalityMatchHandler((equalityMatchFilter *)f, err,
+      return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_uid());
     } else {
       *err = 2;
@@ -123,7 +123,7 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
     }
   } break;
   case AND: {
-    andFilter *af = (andFilter *)f;
+    AndFilter *af = (AndFilter *)f;
     for (unsigned long int i = 0; i < af->filters.size(); i++) {
       if (!filterLine(af->filters[i], err, databaseEntry)) {
         return false;
@@ -133,7 +133,7 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
 
   } break;
   case OR: {
-    orFilter *of = (orFilter *)f;
+    OrFilter *of = (OrFilter *)f;
     for (unsigned long int i = 0; i < of->filters.size(); i++) {
       if (filterLine(of->filters[i], err, databaseEntry)) {
         return true;
@@ -142,7 +142,7 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
     return false;
   } break;
   case NOT: {
-    notFilter *nf = (notFilter *)f;
+    NotFilter *nf = (NotFilter *)f;
     bool result = !filterLine((nf->filter), err, databaseEntry);
     if (*err == 2)
       return false;
@@ -241,7 +241,7 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
       assertionValue.push_back(BERfilter[1 + ll + i]);
     }
 
-    f = new equalityMatchFilter(attributeDescription, assertionValue);
+    f = new EqualityMatchFilter(attributeDescription, assertionValue);
 
     break;
   case substrings: {
@@ -302,7 +302,7 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
   } break;
   case AND:
-    f = new andFilter();
+    f = new AndFilter();
 
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
@@ -315,7 +315,7 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
       FilterObject *tmpF = convertToFilterObject(BERfilter, end);
       printf("filter type: %d\n", tmpF->getFilterType());
       fflush(stdout);
-      ((andFilter *)f)->filters.push_back(tmpF);
+      ((AndFilter *)f)->filters.push_back(tmpF);
       i += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
            GetLength(BERfilter + 1, &err, end);
       SkipTags(BERfilter, 1, &err, end);
@@ -323,7 +323,7 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
     break;
   case OR:
-    f = new orFilter();
+    f = new OrFilter();
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
@@ -333,7 +333,7 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
       if (err != 0)
         return new FilterObject();
       FilterObject *tmpF = convertToFilterObject(BERfilter, end);
-      ((orFilter *)f)->filters.push_back(tmpF);
+      ((OrFilter *)f)->filters.push_back(tmpF);
       i += 1 + GetLengthOfLength(BERfilter + 1, &err, end) +
            GetLength(BERfilter + 1, &err, end);
       SkipTags(BERfilter, 1, &err, end);
@@ -341,13 +341,13 @@ convertToFilterObject(std::vector<unsigned char>::iterator BERfilter,
 
     break;
   case NOT: {
-    f = new notFilter();
+    f = new NotFilter();
     lenght = GetLength(BERfilter + 1, &err, end);
     GoIntoTag(BERfilter, &err, end);
     if (err != 0)
       return new FilterObject();
     FilterObject *tmpF = convertToFilterObject(BERfilter, end);
-    ((notFilter *)f)->filter = tmpF;
+    ((NotFilter *)f)->filter = tmpF;
     break;
   }
   default:

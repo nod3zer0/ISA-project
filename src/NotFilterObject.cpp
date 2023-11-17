@@ -1,3 +1,3 @@
 #include "inc/NotFilterObject.h"
 
-filterTypes notFilter::getFilterType() { return NOT; };
+filterTypes NotFilter::getFilterType() { return NOT; };

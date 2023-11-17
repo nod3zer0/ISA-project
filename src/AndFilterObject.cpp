@@ -1,3 +1,3 @@
 #include "inc/AndFilterObject.h"
 
-filterTypes andFilter::getFilterType() { return AND; };
+filterTypes AndFilter::getFilterType() { return AND; };

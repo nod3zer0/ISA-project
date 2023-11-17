@@ -1,3 +1,3 @@
 #include "inc/OrFilterObject.h"
 
-filterTypes orFilter::getFilterType() { return OR; };
+filterTypes OrFilter::getFilterType() { return OR; };

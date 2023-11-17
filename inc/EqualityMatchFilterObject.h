@@ -5,13 +5,13 @@
 
 #include <vector>
 
-class equalityMatchFilter : public FilterObject {
+class EqualityMatchFilter : public FilterObject {
 private:
   std::vector<unsigned char> attributeDescription;
   std::vector<unsigned char> assertionValue;
 
 public:
-  equalityMatchFilter(std::vector<unsigned char> attributeDescription,
+  EqualityMatchFilter(std::vector<unsigned char> attributeDescription,
                       std::vector<unsigned char> assertionValue);
   std::vector<unsigned char> getAttributeDescription();
   std::vector<unsigned char> getAssertionValue();

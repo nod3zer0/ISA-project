@@ -34,7 +34,7 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
  * @return true
  * @return false
  */
-bool equalityMatchHandler(equalityMatchFilter *emf, int *err,
+bool equalityMatchHandler(EqualityMatchFilter *emf, int *err,
                           std::vector<unsigned char> attribute) ;
 
 /**

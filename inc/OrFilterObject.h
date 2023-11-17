@@ -5,7 +5,7 @@
 
 #include <vector>
 
-class orFilter : public FilterObject {
+class OrFilter : public FilterObject {
 public:
   std::vector<FilterObject *> filters;
   filterTypes getFilterType();
