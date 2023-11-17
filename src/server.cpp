@@ -62,20 +62,29 @@ int ldapServer(int port, char *dbPath) {
     perror("socket() failed");
     exit(EXIT_FAILURE);
   }
+  const int enable = 1;
+  const int disable = 1;
   returnCode = setsockopt(communicationSocket, IPPROTO_IPV6, IPV6_V6ONLY,
-                          (char *)&sa, sizeof(sa));
+                          &disable, sizeof(int));
 
   if (returnCode < 0) {
     perror("setsockopt() failed");
     close(communicationSocket);
-    exit(-1);
+    exit(1);
   }
   returnCode = setsockopt(communicationSocket, SOL_SOCKET, SO_REUSEADDR,
-                          (char *)&sa, sizeof(sa));
+                          &enable, sizeof(int));
   if (returnCode < 0) {
     perror("setsockopt() failed");
     close(communicationSocket);
-    exit(-1);
+    exit(1);
+  }
+  returnCode = setsockopt(communicationSocket, SOL_SOCKET, SO_REUSEPORT,
+                          &enable, sizeof(int));
+  if (returnCode < 0) {
+    perror("setsockopt() failed");
+    close(communicationSocket);
+    exit(1);
   }
 
   memset(&sa, 0, sizeof(sa));
