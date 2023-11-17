@@ -161,37 +161,21 @@ std::vector<DatabaseObject> filterHandler(FilterObject *f, int *err,
   int dbErr = 0;
   DatabaseController db(dbLocation);
   int lineCounter = 0;
-  if (f->getFilterType() == undefined) { // check if there is filter
-    while (true) {
-      DatabaseObject obj = db.loadNextRow(&dbErr);
+  while (true) {
 
-      if (dbErr != 0)
-        break;
+    DatabaseObject obj = db.loadNextRow(&dbErr);
+
+    if (dbErr != 0)
+      break;
+
+    if (filterLine(f, err, obj)) {
       resultDB.push_back(obj);
       lineCounter++;
-      if (lineCounter >= sizeLimit && sizeLimit != 0) {
-        *err = 1;
-        break;
-      }
     }
-  } else {
 
-    while (true) {
-
-      DatabaseObject obj = db.loadNextRow(&dbErr);
-
-      if (dbErr != 0)
-        break;
-
-      if (filterLine(f, err, obj)) {
-        resultDB.push_back(obj);
-        lineCounter++;
-      }
-
-      if (lineCounter >= sizeLimit && sizeLimit != 0) {
-        *err = 1;
-        break;
-      }
+    if (lineCounter >= sizeLimit && sizeLimit != 0) {
+      *err = 1;
+      break;
     }
   }
 
