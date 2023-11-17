@@ -1,0 +1,76 @@
+.TH "DatabaseController" 3 "ISA LDAP server" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+DatabaseController \- class for loading and parsing database file  
+
+.SH SYNOPSIS
+.br
+.PP
+.PP
+\fC#include <DatabaseController\&.h>\fP
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBDatabaseObject\fP \fBloadNextRow\fP (int *err)"
+.br
+.RI "loads next row from database file "
+.ti -1c
+.RI "std::vector< \fBDatabaseObject\fP > \fBloadAllRows\fP ()"
+.br
+.RI "loads all rows from database file "
+.ti -1c
+.RI "\fBDatabaseController\fP (std::string fileName)"
+.br
+.RI "Construct a new Database Controller object\&. "
+.in -1c
+.SH "Detailed Description"
+.PP 
+class for loading and parsing database file 
+.SH "Constructor & Destructor Documentation"
+.PP 
+.SS "DatabaseController::DatabaseController (std::string fileName)"
+
+.PP
+Construct a new Database Controller object\&. 
+.PP
+\fBParameters\fP
+.RS 4
+\fIfileName\fP path to database csv file 
+.RE
+.PP
+
+.SH "Member Function Documentation"
+.PP 
+.SS "std::vector< \fBDatabaseObject\fP > DatabaseController::loadAllRows ()"
+
+.PP
+loads all rows from database file 
+.PP
+\fBReturns\fP
+.RS 4
+std::vector<DatabaseObject> 
+.RE
+.PP
+
+.SS "\fBDatabaseObject\fP DatabaseController::loadNextRow (int * err)"
+
+.PP
+loads next row from database file 
+.PP
+\fBParameters\fP
+.RS 4
+\fIerr\fP 1 if EOF, 0 if success 
+.RE
+.PP
+\fBReturns\fP
+.RS 4
+\fBDatabaseObject\fP 
+.RE
+.PP
+
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ISA LDAP server from the source code\&.

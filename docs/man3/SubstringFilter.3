@@ -1,0 +1,42 @@
+.TH "SubstringFilter" 3 "ISA LDAP server" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+SubstringFilter
+.SH SYNOPSIS
+.br
+.PP
+.PP
+Inherits \fBFilterObject\fP\&.
+.SS "Public Member Functions"
+
+.in +1c
+.ti -1c
+.RI "\fBSubstringFilter\fP (std::vector< unsigned char > attributeDescription, std::vector< unsigned char > subInitial, std::vector< std::vector< unsigned char > > subAny, std::vector< unsigned char > subFinal)"
+.br
+.ti -1c
+.RI "std::vector< unsigned char > \fBgetAttributeDescription\fP ()"
+.br
+.ti -1c
+.RI "std::vector< unsigned char > \fBgetSubInitial\fP ()"
+.br
+.ti -1c
+.RI "std::vector< std::vector< unsigned char > > \fBgetSubAny\fP ()"
+.br
+.ti -1c
+.RI "std::vector< unsigned char > \fBgetSubFinal\fP ()"
+.br
+.ti -1c
+.RI "filterTypes \fBgetFilterType\fP ()"
+.br
+.in -1c
+.SH "Member Function Documentation"
+.PP 
+.SS "filterTypes SubstringFilter::getFilterType ()\fC [virtual]\fP"
+
+.PP
+Reimplemented from \fBFilterObject\fP\&.
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for ISA LDAP server from the source code\&.
