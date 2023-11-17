@@ -38,8 +38,14 @@ void SigQuitCatcher(int n) {
   exit(0);
 }
 
+// makro for destroying berBindResponse object
+#define CLEANUP_SERVER delete ((BerSequenceObject *)berBindResponse);
+
 /**
- * @brief Ldap server, This part was inspired by the example from stubs demo tcp server https://git.fit.vutbr.cz/NESFIT/IPK-Projekty/src/branch/master/Stubs/cpp/DemoTcp by Vladimir Vesely Ph.D.
+ * @brief Ldap server, This part was inspired by the example from stubs demo tcp
+ * server
+ * https://git.fit.vutbr.cz/NESFIT/IPK-Projekty/src/branch/master/Stubs/cpp/DemoTcp
+ * by Vladimir Vesely Ph.D.
  *
  * @param port port to listen on
  * @param dbPath path to database file
@@ -150,10 +156,12 @@ int ldapServer(int port, char *dbPath) {
         case 0x63:
           printf("search request\n");
           searchRequestHandler(EnvelopeObject, childSocket, dbPath);
+          delete EnvelopeObject;
           break;
         case 0x62: // unbind request
           printf("%d: Connection closed\n", childPid);
           close(childSocket);
+          delete EnvelopeObject;
           exit(0);
           break;
         case 0x60: { // bind request
@@ -178,15 +186,18 @@ int ldapServer(int port, char *dbPath) {
             std::vector<unsigned char> bindResponse =
                 berBindResponse->getBerRepresentation();
             send(childSocket, &bindResponse[0], bindResponse.size(), 0);
+            delete EnvelopeObject;
             close(childSocket);
             exit(0);
           }
 
           send(childSocket, &bindResponse[0], bindResponse.size(), 0);
+          delete EnvelopeObject;
           break;
         }
         default:
           printf("unknown request\n");
+          delete EnvelopeObject;
           close(childSocket);
           exit(0);
           break;
@@ -194,6 +205,7 @@ int ldapServer(int port, char *dbPath) {
       }
 
       printf("%d: Connection closed\n", childPid);
+
       close(childSocket);
       exit(0);
     } else {

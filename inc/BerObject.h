@@ -27,6 +27,8 @@ public:
    * @return std::vector<unsigned char>
    */
   virtual std::vector<unsigned char> getBerRepresentation();
+
+  virtual ~BerObject();
 };
 
 #endif

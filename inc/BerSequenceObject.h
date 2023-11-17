@@ -18,6 +18,7 @@ public:
   BerSequenceObject(int tag);
   BerSequenceObject();
   int GetTag();
+  ~BerSequenceObject();
 };
 
 #endif

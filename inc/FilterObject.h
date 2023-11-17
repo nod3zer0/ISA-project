@@ -11,6 +11,7 @@
 class FilterObject {
 public:
   virtual filterTypes getFilterType();
+  virtual ~FilterObject();
 };
 
 

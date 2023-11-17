@@ -17,6 +17,7 @@ public:
   std::vector<unsigned char> getBerRepresentation();
   BerIntObject();
   BerIntObject(int value);
+  ~BerIntObject();
 };
 
 #endif

@@ -20,3 +20,5 @@ std::vector<unsigned char> BerEnumObject::getBerRepresentation() {
 }
 
 BerEnumObject::BerEnumObject(char value) { this->value = value; }
+
+BerEnumObject::~BerEnumObject() {}

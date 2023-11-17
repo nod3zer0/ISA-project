@@ -19,3 +19,5 @@ BerIntObject::BerIntObject(int value) { this->value = value; }
 int BerIntObject::getValue() { return value; }
 
 void BerIntObject::setValue(int value) { this->value = value; }
+
+BerIntObject::~BerIntObject() {}

@@ -13,6 +13,7 @@ public:
   long long int getLenght();
   std::vector<unsigned char> getBerRepresentation();
   BerSetObject();
+  ~BerSetObject();
 };
 
 #endif

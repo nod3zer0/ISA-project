@@ -11,3 +11,7 @@ std::vector<unsigned char> BerObject::getBerRepresentation(){
     std::vector<unsigned char> result;
     return result;
 }
+
+BerObject::~BerObject(){
+
+}

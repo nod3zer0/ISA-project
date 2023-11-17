@@ -157,19 +157,12 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
 std::vector<DatabaseObject> filterHandler(FilterObject *f, int *err,
                                           const char *dbLocation,
                                           int sizeLimit) {
-  int x = 0;
   std::vector<DatabaseObject> resultDB;
   int dbErr = 0;
   DatabaseController db(dbLocation);
   int lineCounter = 0;
   if (f->getFilterType() == undefined) { // check if there is filter
     while (true) {
-
-      x++;
-      if (x >= 856) {
-        printf("x: %d\n", x);
-        fflush(stdout);
-      }
       DatabaseObject obj = db.loadNextRow(&dbErr);
 
       if (dbErr != 0)

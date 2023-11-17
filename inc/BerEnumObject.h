@@ -14,6 +14,7 @@ public:
   long long int getLenght();
   std::vector<unsigned char> getBerRepresentation();
   BerEnumObject(char value);
+  ~BerEnumObject();
 };
 
 #endif

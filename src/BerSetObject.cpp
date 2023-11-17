@@ -1,14 +1,12 @@
 #include "inc/BerSetObject.h"
 
-berObjectTypes BerSetObject::getBerObjectType() {
-  return berSequenceObject;
-}
+berObjectTypes BerSetObject::getBerObjectType() { return berSequenceObject; }
 
 long long int BerSetObject::getLenght() {
 
   long long int dataLenght = 0;
 
-  for (long unsigned int  i = 0; i < objects.size(); i++) {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
     dataLenght += objects[i]->getLenght();
   }
 
@@ -36,4 +34,10 @@ std::vector<unsigned char> BerSetObject::getBerRepresentation() {
   return berRepresentation;
 }
 
-BerSetObject::BerSetObject() { }
+BerSetObject::BerSetObject() {}
+
+BerSetObject::~BerSetObject() {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
+    delete objects[i];
+  }
+}

@@ -41,3 +41,9 @@ BerSequenceObject::BerSequenceObject() { tag = BER_SEQUENCE_C; }
 int BerSequenceObject::GetTag() { return tag; }
 
 BerSequenceObject::BerSequenceObject(int tag) { this->tag = tag; }
+
+BerSequenceObject::~BerSequenceObject() {
+  for (long unsigned int i = 0; i < objects.size(); i++) {
+    delete objects[i];
+  }
+}

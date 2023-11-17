@@ -21,3 +21,5 @@ std::vector<unsigned char> BerBoolObject::getBerRepresentation() {
 }
 
 BerBoolObject::BerBoolObject(char value) { this->value = value; }
+
+BerBoolObject::~BerBoolObject() {}

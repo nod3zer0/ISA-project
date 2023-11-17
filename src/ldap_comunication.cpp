@@ -4,8 +4,7 @@
 BerObject *InitSearchResultEntry(BerObject *searchRequest,
                                  std::vector<unsigned char> LDAPDN) {
   BerSequenceObject *envelope = new BerSequenceObject();
-  envelope->objects.push_back(
-      ((BerSequenceObject *)(searchRequest))->objects[0]); // copy message ID
+  envelope->objects.push_back(new BerIntObject(static_cast<BerIntObject*>(static_cast<BerSequenceObject*>(searchRequest)->objects[0])->getValue())); // copy message ID
   BerSequenceObject *PartialAttributeList =
       new BerSequenceObject(BER_SEARCH_RESULT_ENTRY_C);
   envelope->objects.push_back(PartialAttributeList);
@@ -48,7 +47,7 @@ BerObject *CreateBindResponse(BerObject *bindRequest, int resultCode) {
 int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
                          unsigned int result_code) {
   BerSequenceObject *envelope = new BerSequenceObject();
-  envelope->objects.push_back(searchRequest->objects[0]); // copy message ID
+  envelope->objects.push_back(new BerIntObject(dynamic_cast<BerIntObject*>(searchRequest->objects[0])->getValue())); // copy message ID
   BerSequenceObject *searchResultDoneSequence =
       new BerSequenceObject(BER_SEARCH_RESULT_DONE_C);
   envelope->objects.push_back(searchResultDoneSequence);
@@ -58,6 +57,7 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
 
   std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
   send(comm_socket, &envelopeBer[0], envelopeBer.size(), 0);
+  delete envelope;
   return 0;
 }
 
@@ -224,6 +224,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     std::vector<unsigned char> searchResultEntryBer =
         searchResultEntry->getBerRepresentation();
     send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(), 0);
+    delete searchResultEntry;
   }
 
   if (sizeLimitExceeded) {
@@ -234,7 +235,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
     sendSearchResultDone((BerSequenceObject *)envelope, comm_socket,
                          BER_LDAP_SUCCESS);
   }
-
+  delete f;
   return 0;
 }
 
