@@ -198,13 +198,13 @@ int ldapServer(int port, char *dbPath) {
                 EnvelopeObject, BER_LDAP_AUTH_METHOD_NOT_SUPPORTED);
             std::vector<unsigned char> bindResponse =
                 berBindResponse->getBerRepresentation();
-            send(childSocket, &bindResponse[0], bindResponse.size(), 0);
+            send(childSocket, &bindResponse[0], bindResponse.size(), MSG_NOSIGNAL);
             delete EnvelopeObject;
             close(childSocket);
             exit(0);
           }
 
-          send(childSocket, &bindResponse[0], bindResponse.size(), 0);
+          send(childSocket, &bindResponse[0], bindResponse.size(), MSG_NOSIGNAL);
           delete EnvelopeObject;
           break;
         }

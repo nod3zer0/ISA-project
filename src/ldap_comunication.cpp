@@ -61,7 +61,7 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
   searchResultDoneSequence->objects.push_back(new BerStringObject(""));
 
   std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
-  send(comm_socket, &envelopeBer[0], envelopeBer.size(), 0);
+  send(comm_socket, &envelopeBer[0], envelopeBer.size(), MSG_NOSIGNAL);
   delete envelope;
   return 0;
 }
@@ -134,7 +134,7 @@ int sendNoticeOfDisconnection(int comSocket, char errCode) {
       new BerStringObject("1.3.6.1.4.1.1466.20036"));
   extendedResp->objects.push_back(new BerStringObject(""));
   std::vector<unsigned char> envelopeBer = envelope->getBerRepresentation();
-  send(comSocket, &envelopeBer[0], envelopeBer.size(), 0);
+  send(comSocket, &envelopeBer[0], envelopeBer.size(), MSG_NOSIGNAL);
   return 0;
 }
 
@@ -182,7 +182,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
   // filtering database
   std::vector<DatabaseObject> result;
-  int err = 0;
+  err = 0;
   result = filterHandler(f, &err, dbPath, sr.sizeLimit);
 
   result = removeDuplicates(result);
@@ -234,7 +234,7 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
     std::vector<unsigned char> searchResultEntryBer =
         searchResultEntry->getBerRepresentation();
-    send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(), 0);
+    send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(), MSG_NOSIGNAL);
     delete searchResultEntry;
   }
 
