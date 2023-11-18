@@ -15,28 +15,6 @@ filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
   return undefined;
 }
 
-// int GetNumberOfBytesNeddedForINT(int value) {
-//   if (value < 0) {
-//     return -1;
-//   }
-//   if (value < 0x100) {
-//     return 1 + 2;
-//   } else if (value < 0x10000) {
-//     return 2 + 2;
-//   } else if (value < 0x1000000) {
-//     return 3 + 2;
-//   } else if (value < 0x100000000) {
-//     return 4 + 2;
-//   }
-//   return -1;
-// }
-
-// /**
-//  * @brief parses 1 integer from ldap coded message
-//  *
-//  * @param s start of the integer in char array
-//  * @return int - parsed integer
-//  */
 unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err,
                       std::vector<unsigned char>::iterator end) {
   unsigned int value = 0;
@@ -77,56 +55,7 @@ unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err,
   return value;
 }
 
-// /**
-//  * @brief writes int in BER LDAP format to char array
-//  *
-//  * @param s start of the string in char array
-//  * @param value int to be written
-//  * @param length number of bytes written (including tag and length bytes)
-//  * @return -1 if error, 0 if success
-//  */
-// int writeInt(unsigned char *s, int value, int *length) {
-//   if (value < 0) {
-//     return -1;
-//   }
-//   if (value < 0x100) {
-//     s[0] = 0x02;
-//     s[1] = 0x01;
-//     s[2] = value;
-//     (*length) = 1 + 2;
-//   } else if (value < 0x10000) {
-//     s[0] = 0x02;
-//     s[1] = 0x02;
-//     s[2] = value >> 8;
-//     s[3] = value;
-//     (*length) = 2 + 2;
-//   } else if (value < 0x1000000) {
-//     s[0] = 0x02;
-//     s[1] = 0x03;
-//     s[2] = value >> 16;
-//     s[3] = value >> 8;
-//     s[4] = value;
-//     (*length) = 3 + 2;
-//   } else if (value < 0x100000000) {
-//     s[0] = 0x02;
-//     s[1] = 0x04;
-//     s[2] = value >> 24;
-//     s[3] = value >> 16;
-//     s[4] = value >> 8;
-//     s[5] = value;
-//     (*length) = 4 + 2;
-//   } else {
-//     return -1;
-//   }
-//   return 0;
-// }
 
-/**
- * @brief gets number of bytes that takes to necode length of data in BER
- * @param start start of the length in char array
- * @param err error code
- * @return number of bytes that takes to necode length of data in BER
- */
 int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,
                       std::vector<unsigned char>::iterator end) {
 
@@ -146,13 +75,15 @@ int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,
   return length;
 }
 
-/**
- * @brief parses length of BER encoded data (supports longform and shortform),
- * supports only 4 bytes
- * @param start start of the length in char array
- * @param err error code, err 1 if length is longer than 4 bytes
- * @return length of the data (without tag and lenght bytes)
- */
+std::vector<unsigned char> ToLowerCase(std::vector<unsigned char> input) {
+  std::vector<unsigned char> result;
+  for (unsigned long int i = 0; i < input.size(); i++) {
+        result.push_back(std::tolower(input[i]));
+  }
+  return result;
+}
+
+
 int GetLength(std::vector<unsigned char>::iterator start, int *err,
               std::vector<unsigned char>::iterator end) {
   if (std::distance(start, end) < 1) {
@@ -189,13 +120,7 @@ int GetLength(std::vector<unsigned char>::iterator start, int *err,
   return length;
 }
 
-/**
- * @brief skips n number of tags to next tag
- * @param start  char array starting with tag from which to skip tags
- * @param n number of tags to skip
- * @param err error code
- * @return pointer to next tag
- */
+
 void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
               std::vector<unsigned char>::iterator end) { // TODO: test
 
@@ -220,12 +145,7 @@ void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
   start = start + jumpLength - 1; // -1 to get index of tag instead of length
 }
 
-// /** TODO: update to use vector
-//  * @brief Increase lenght of BER encoded data by n
-//  * @param start start of the length in char array
-//  * @param array whole envelope
-//  * @param n number of bytes to increase
-//  */
+
 void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
                           int *err, std::vector<unsigned char>::iterator end) {
 
@@ -245,13 +165,7 @@ void AppendLenght4Bytes(std::vector<unsigned char> &start, int value) {
   start.push_back(value);
 }
 
-/**
- * @brief writes int in BER LDAP format to char array
- *
- * @param s start of the string in char array
- * @param value int to be written
- * @return -1 if error, 0 if success
- */
+
 int WriteIntAppend(std::vector<unsigned char> &s, int value) {
   if (value < 0) {
     return -1;
@@ -303,12 +217,7 @@ int HowManyBytesWillIntUse(int value) {
   return -1;
 }
 
-/**
- * @brief go into tag
- * @param start  char array starting with tag from which to skip tags
- * @param err error code
- * @return pointer to next tag
- */
+
 void GoIntoTag(std::vector<unsigned char>::iterator &start, int *err,
                std::vector<unsigned char>::iterator end) {
 

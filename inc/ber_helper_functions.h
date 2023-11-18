@@ -4,6 +4,15 @@
 #include "inc/ber_constants.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+
+/**
+ * @brief converts std::vector<unsigned char> to lowercase
+ * @param input std::vector<unsigned char> to be converted
+ * @return converted std::vector<unsigned char>
+ */
+std::vector<unsigned char> ToLowerCase(std::vector<unsigned char> input);
+
 /**
  * @brief parses 1 integer from ldap coded message
  *

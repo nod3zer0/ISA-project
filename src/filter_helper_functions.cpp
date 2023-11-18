@@ -2,9 +2,9 @@
 
 bool substrFilterHandler(SubstringFilter *sf, int *err,
                          std::vector<unsigned char> attribute) {
-  std::vector<unsigned char> attributeInital;
-  std::vector<unsigned char> attributeMiddle;
-  std::vector<unsigned char> attributeFinal;
+  std::vector<unsigned char> attributeInital = {};
+  std::vector<unsigned char> attributeMiddle = {};
+  std::vector<unsigned char> attributeFinal = {};
 
   // extract initial
   if (!sf->getSubInitial().empty()) {
@@ -16,7 +16,11 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
     } else {
       return false;
     }
+  } else {
+    attributeMiddle =
+        std::vector<unsigned char>(attribute.begin(), attribute.end());
   }
+
   // extract final
   if (!sf->getSubFinal().empty()) {
     if (attribute.size() >= sf->getSubFinal().size()) {
@@ -32,27 +36,29 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
     }
   }
 
-  if (sf->getSubInitial().empty() && sf->getSubFinal().empty()) {
-    attributeMiddle =
-        std::vector<unsigned char>(attribute.begin(), attribute.end());
-  }
-
-  if (!sf->getSubInitial().empty() && attributeInital != sf->getSubInitial()) {
+  // check subInitial
+  if (!sf->getSubInitial().empty() &&
+      ToLowerCase(attributeInital) != ToLowerCase(sf->getSubInitial())) {
     return false;
   }
-  if (!sf->getSubFinal().empty() && attributeFinal != sf->getSubFinal()) {
+  // check subFinal
+  if (!sf->getSubFinal().empty() &&
+      ToLowerCase(attributeFinal) != ToLowerCase(sf->getSubFinal())) {
     return false;
   }
   unsigned long int x = 0;
+
+  // convert to lower case
+  attributeMiddle = ToLowerCase(attributeMiddle);
 
   for (unsigned long int y = 0; y < sf->getSubAny().size(); y++) {
     bool match = false;
     for (; x < attributeMiddle.size(); x++) {
 
-      if (attributeMiddle[x] == sf->getSubAny()[y][0]) {
+      if (attributeMiddle[x] == std::tolower(sf->getSubAny()[y][0])) {
         match = true;
         for (unsigned long int z = 0; z < sf->getSubAny()[y].size(); z++) {
-          if (attributeMiddle[x + z] != sf->getSubAny()[y][z]) {
+          if (attributeMiddle[x + z] != std::tolower(sf->getSubAny()[y][z])) {
             match = false;
             break;
           }
@@ -71,7 +77,7 @@ bool substrFilterHandler(SubstringFilter *sf, int *err,
 
 bool equalityMatchHandler(EqualityMatchFilter *emf, int *err,
                           std::vector<unsigned char> attribute) {
-  if (emf->getAssertionValue() == attribute) {
+  if (ToLowerCase(emf->getAssertionValue()) == ToLowerCase(attribute)) {
     return true;
   }
   return false;
@@ -82,8 +88,8 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   // cn
   std::vector<unsigned char> cn = {'c', 'n'};
   // CommonName
-  std::vector<unsigned char> CommonName = {'C', 'o', 'm', 'm', 'o',
-                                           'n', 'N', 'a', 'm', 'e'};
+  std::vector<unsigned char> CommonName = {'c', 'o', 'm', 'm', 'o',
+                                           'n', 'n', 'a', 'm', 'e'};
   // email
   std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
   // email
@@ -91,12 +97,12 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   // uid
   std::vector<unsigned char> uid = {'u', 'i', 'd'};
   // UserID
-  std::vector<unsigned char> UserID = {'U', 's', 'e', 'r', 'I', 'D'};
+  std::vector<unsigned char> UserID = {'u', 's', 'e', 'r', 'i', 'd'};
 
   switch (f->getFilterType()) {
   case equalityMatch: {
     std::vector<unsigned char> attributeDescription =
-        ((EqualityMatchFilter *)f)->getAttributeDescription();
+        ToLowerCase(((EqualityMatchFilter *)f)->getAttributeDescription());
     if (attributeDescription == cn || attributeDescription == CommonName) {
       return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_name());
@@ -114,7 +120,7 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   } break;
   case substrings: {
     std::vector<unsigned char> attributeDescription =
-        ((SubstringFilter *)f)->getAttributeDescription();
+           ToLowerCase(((SubstringFilter *)f)->getAttributeDescription());
     if (attributeDescription == cn || attributeDescription == CommonName) {
       return substrFilterHandler((SubstringFilter *)f, err,
                                  databaseEntry.get_name());
