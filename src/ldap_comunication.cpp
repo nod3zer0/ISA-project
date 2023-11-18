@@ -166,11 +166,18 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
   sr.attributes.uid = false;
 
   // cn
-  std::vector<unsigned char> cn = {'c', 'n'};
+   std::vector<unsigned char> cn = {'c', 'n'};
+  // CommonName
+   std::vector<unsigned char> CommonName = {'C', 'o', 'm', 'm', 'o',
+                                           'n', 'N', 'a', 'm', 'e'};
   // email
-  std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+   std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+  // email
+   std::vector<unsigned char> mail = {'m', 'a', 'i', 'l'};
   // uid
-  std::vector<unsigned char> uid = {'u', 'i', 'd'};
+   std::vector<unsigned char> uid = {'u', 'i', 'd'};
+  // UserID
+   std::vector<unsigned char> UserID = {'U', 's', 'e', 'r', 'I', 'D'};
 
   // getting size limit
   sr.sizeLimit =
@@ -197,13 +204,13 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
   for (long unsigned int i = 0; i < attributesSequence->objects.size(); i++) {
 
-    if (((BerStringObject *)attributesSequence->objects[i])->value == cn) {
+    if (((BerStringObject *)attributesSequence->objects[i])->value == cn || ((BerStringObject *)attributesSequence->objects[i])->value == CommonName) {
       sr.attributes.cn = true;
     }
-    if (((BerStringObject *)attributesSequence->objects[i])->value == email) {
+    if (((BerStringObject *)attributesSequence->objects[i])->value == email || ((BerStringObject *)attributesSequence->objects[i])->value == mail) {
       sr.attributes.email = true;
     }
-    if (((BerStringObject *)attributesSequence->objects[i])->value == uid) {
+    if (((BerStringObject *)attributesSequence->objects[i])->value == uid || ((BerStringObject *)attributesSequence->objects[i])->value == UserID) {
       sr.attributes.uid = true;
     }
   }
@@ -234,7 +241,8 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
     std::vector<unsigned char> searchResultEntryBer =
         searchResultEntry->getBerRepresentation();
-    send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(), MSG_NOSIGNAL);
+    send(comm_socket, &searchResultEntryBer[0], searchResultEntryBer.size(),
+         MSG_NOSIGNAL);
     delete searchResultEntry;
   }
 

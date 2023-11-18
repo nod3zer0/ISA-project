@@ -81,22 +81,29 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
 
   // cn
   std::vector<unsigned char> cn = {'c', 'n'};
+  // CommonName
+  std::vector<unsigned char> CommonName = {'C', 'o', 'm', 'm', 'o',
+                                           'n', 'N', 'a', 'm', 'e'};
   // email
   std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+  // email
+  std::vector<unsigned char> mail = {'m', 'a', 'i', 'l'};
   // uid
   std::vector<unsigned char> uid = {'u', 'i', 'd'};
+  // UserID
+  std::vector<unsigned char> UserID = {'U', 's', 'e', 'r', 'I', 'D'};
 
   switch (f->getFilterType()) {
   case equalityMatch: {
     std::vector<unsigned char> attributeDescription =
         ((EqualityMatchFilter *)f)->getAttributeDescription();
-    if (attributeDescription == cn) {
+    if (attributeDescription == cn || attributeDescription == CommonName) {
       return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_name());
-    } else if (attributeDescription == email) {
+    } else if (attributeDescription == email || attributeDescription == mail) {
       return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_email());
-    } else if (attributeDescription == uid) {
+    } else if (attributeDescription == uid || attributeDescription == UserID) {
       return equalityMatchHandler((EqualityMatchFilter *)f, err,
                                   databaseEntry.get_uid());
     } else {
@@ -108,13 +115,13 @@ bool filterLine(FilterObject *f, int *err, DatabaseObject &databaseEntry) {
   case substrings: {
     std::vector<unsigned char> attributeDescription =
         ((SubstringFilter *)f)->getAttributeDescription();
-    if (attributeDescription == cn) {
+    if (attributeDescription == cn || attributeDescription == CommonName) {
       return substrFilterHandler((SubstringFilter *)f, err,
                                  databaseEntry.get_name());
-    } else if (attributeDescription == email) {
+    } else if (attributeDescription == email || attributeDescription == mail) {
       return substrFilterHandler((SubstringFilter *)f, err,
                                  databaseEntry.get_email());
-    } else if (attributeDescription == uid) {
+    } else if (attributeDescription == uid || attributeDescription == UserID) {
       return substrFilterHandler((SubstringFilter *)f, err,
                                  databaseEntry.get_uid());
     } else {
