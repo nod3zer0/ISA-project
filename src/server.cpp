@@ -61,7 +61,7 @@ int ldapServer(int port, char *dbPath) {
   }
   // setting options for main socket
   const int enable = 1;
-  const int disable = 1;
+  const int disable = 0;
   returnCode = setsockopt(communicationSocket, IPPROTO_IPV6, IPV6_V6ONLY,
                           &disable, sizeof(int));
 
