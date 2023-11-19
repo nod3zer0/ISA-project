@@ -1,3 +1,9 @@
+/**
+ * @file SubstringFilterObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Object for substring filter
+ * @date 2023-11-19
+ */
 #ifndef SUBSTRINGFILTER_H
 #define SUBSTRINGFILTER_H
 #include "inc/ber_helper_functions.h"

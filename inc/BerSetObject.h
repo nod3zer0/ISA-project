@@ -1,3 +1,10 @@
+/**
+ * @file BerSetObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Set object for BER LDAP
+ * @date 2023-11-19
+ */
+
 #ifndef BERSETOBJECT_H
 #define BERSETOBJECT_H
 #include "inc/BerObject.h"

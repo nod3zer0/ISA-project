@@ -1,3 +1,9 @@
+/**
+ * @file BerObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Base class for all BER objects
+ * @date 2023-11-19
+ */
 #ifndef BER_OBJECT_H
 #define BER_OBJECT_H
 #include "inc/ber_helper_functions.h"

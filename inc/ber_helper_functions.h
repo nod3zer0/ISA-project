@@ -1,3 +1,9 @@
+/**
+ * @file ber_helper_functions.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Helper functions for parsing BER LDAP
+ * @date 2023-11-19
+ */
 #ifndef BER_HELPER_FUNCTIONS_H
 #define BER_HELPER_FUNCTIONS_H
 #include <vector>

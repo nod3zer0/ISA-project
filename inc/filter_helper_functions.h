@@ -1,4 +1,9 @@
-
+/**
+ * @file filter_helper_functions.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Helper functions for filters
+ * @date 2023-11-19
+ */
 #ifndef INC_FILTER_HELPER_FUNCTIONS_H
 #define INC_FILTER_HELPER_FUNCTIONS_H
 

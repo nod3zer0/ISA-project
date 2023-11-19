@@ -1,3 +1,8 @@
+/**
+ * @file ber_helper_functions.cpp
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @date 2023-11-19
+ */
 #include "inc/ber_helper_functions.h"
 
 filterTypes getFilterType(std::vector<unsigned char>::iterator start) {
@@ -55,7 +60,6 @@ unsigned int ParseINT(std::vector<unsigned char>::iterator s, int *err,
   return value;
 }
 
-
 int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,
                       std::vector<unsigned char>::iterator end) {
 
@@ -78,11 +82,10 @@ int GetLengthOfLength(std::vector<unsigned char>::iterator start, int *err,
 std::vector<unsigned char> ToLowerCase(std::vector<unsigned char> input) {
   std::vector<unsigned char> result;
   for (unsigned long int i = 0; i < input.size(); i++) {
-        result.push_back(std::tolower(input[i]));
+    result.push_back(std::tolower(input[i]));
   }
   return result;
 }
-
 
 int GetLength(std::vector<unsigned char>::iterator start, int *err,
               std::vector<unsigned char>::iterator end) {
@@ -102,9 +105,9 @@ int GetLength(std::vector<unsigned char>::iterator start, int *err,
       *err = 1;
       return 0;
     }
-    if (lengthOfLength > 4 && start[lengthOfLength - 4] >
-                                  0x00) { // only support up to 4 bytes, more is
-                                          // not necessary for this project
+    if (lengthOfLength > 4 &&
+        start[lengthOfLength - 4] > 0x00) { // only support up to 4 bytes, more
+                                            // is not necessary for this project
       *err = 1;
       return 0;
     }
@@ -120,9 +123,8 @@ int GetLength(std::vector<unsigned char>::iterator start, int *err,
   return length;
 }
 
-
 void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
-              std::vector<unsigned char>::iterator end) { // TODO: test
+              std::vector<unsigned char>::iterator end) {
 
   int i = 0;
   int jumpLength = 1;
@@ -132,7 +134,7 @@ void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
       return;
     }
     int length =
-        GetLength(start + jumpLength, err, end) + // TODO: fix to use vector
+        GetLength(start + jumpLength, err, end) +
         GetLengthOfLength(start + jumpLength, err, end);
     if (*err != 0) {
       *err = 1;
@@ -144,7 +146,6 @@ void SkipTags(std::vector<unsigned char>::iterator &start, int n, int *err,
   }
   start = start + jumpLength - 1; // -1 to get index of tag instead of length
 }
-
 
 void IncreaseLength4Bytes(std::vector<unsigned char>::iterator &start, int n,
                           int *err, std::vector<unsigned char>::iterator end) {
@@ -165,34 +166,50 @@ void AppendLenght4Bytes(std::vector<unsigned char> &start, int value) {
   start.push_back(value);
 }
 
-
 int WriteIntAppend(std::vector<unsigned char> &s, int value) {
   if (value < 0) {
     return -1;
   }
+  int overflow = 0;
   s.push_back(BER_INT_C);
   if (value < 0x100) {
     s.push_back(0x01); // length
+    if ((value) == 0xFF) {
+      s.push_back(0x00);
+      overflow = 1;
+    }
     s.push_back(value);
-    return 3;
+    return 3 + overflow;
   } else if (value < 0x10000) {
     s.push_back(0x02); // length
+    if ((value >> 8) == 0xFF) {
+      s.push_back(0x00);
+      overflow = 1;
+    }
     s.push_back(value >> 8);
     s.push_back(value);
-    return 4;
+    return 4 + overflow;
   } else if (value < 0x1000000) {
     s.push_back(0x03); // length
+    if ((value >> 16) == 0xFF) {
+      s.push_back(0x00);
+      overflow = 1;
+    }
     s.push_back(value >> 16);
     s.push_back(value >> 8);
     s.push_back(value);
-    return 5;
+    return 5 + overflow;
   } else if (value < 0x100000000) {
     s.push_back(0x04); // length
+    if ((value >> 24) == 0xFF) {
+      s.push_back(0x00);
+      overflow = 1;
+    }
     s.push_back(value >> 24);
     s.push_back(value >> 16);
     s.push_back(value >> 8);
     s.push_back(value);
-    return 6;
+    return 6 + overflow;
   } else {
     return -1;
   }
@@ -204,19 +221,35 @@ int HowManyBytesWillIntUse(int value) {
     return -1;
   }
   if (value < 0x100) {
-    return 3;
+    if ((value) == 0xFF) {
+      return 4;
+    } else {
+      return 3;
+    }
+
   } else if (value < 0x10000) {
-    return 4;
+    if ((value >> 8) == 0xFF) {
+      return 5;
+    } else {
+      return 4;
+    }
   } else if (value < 0x1000000) {
-    return 5;
+    if ((value >> 16) == 0xFF) {
+      return 6;
+    } else {
+      return 5;
+    }
   } else if (value < 0x100000000) {
-    return 6;
+    if ((value >> 24) == 0xFF) {
+      return 7;
+    } else {
+      return 6;
+    }
   } else {
     return -1;
   }
   return -1;
 }
-
 
 void GoIntoTag(std::vector<unsigned char>::iterator &start, int *err,
                std::vector<unsigned char>::iterator end) {

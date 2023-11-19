@@ -1,3 +1,9 @@
+/**
+ * @file OrFilterObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Object for OR filter
+ * @date 2023-11-19
+ */
 #ifndef ORFILTEROBJECT_H
 #define ORFILTEROBJECT_H
 #include "inc/FilterObject.h"

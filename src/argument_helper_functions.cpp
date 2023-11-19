@@ -1,3 +1,8 @@
+/**
+ * @file argument_helper_functions.cpp
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @date 2023-11-19
+ */
 #include "inc/argument_helper_functions.h"
 
 argsT parseArguments(int argc, const char **argv) {
@@ -11,15 +16,11 @@ argsT parseArguments(int argc, const char **argv) {
   // main loop for parsing arguments
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-f") == 0) {
-      // check if there is value for host and if it is not too long
+      // check if there is value for path to file
       if (i + 1 >= argc) {
         strcpy(args.dbPath, "");
         return args;
       } else {
-        if (strlen(argv[i + 1]) > 1000) {
-          args.err = true;
-          return args;
-        }
         strcpy(args.dbPath, argv[i + 1]);
       }
       i++; // skip next argument

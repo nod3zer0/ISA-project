@@ -1,3 +1,8 @@
+/**
+ * @file DatabaseController.cpp
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @date 2023-11-19
+ */
 #include "inc/DatabaseController.h"
 
 std::vector<DatabaseObject> DatabaseController::loadAllRows() {

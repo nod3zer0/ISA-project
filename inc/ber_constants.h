@@ -1,3 +1,10 @@
+/**
+ * @file ber_constants.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Constants that are used in LDAP BER
+ * @date 2023-11-19
+ */
+
 #ifndef BER_CONSTANTS_H
 #define BER_CONSTANTS_H
 const unsigned int BER_TAG_LENGTH = 1;

@@ -1,3 +1,10 @@
+/**
+ * @file BerIntObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Integer object for BER LDAP
+ * @date 2023-11-19
+ */
+
 #ifndef BERINTOBJECT_H
 #define BERINTOBJECT_H
 #include "inc/BerObject.h"

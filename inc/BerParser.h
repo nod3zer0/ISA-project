@@ -1,3 +1,10 @@
+/**
+ * @file BerParser.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Parser for BER LDAP
+ * @date 2023-11-19
+ */
+
 #ifndef BERPARSER_H
 #define BERPARSER_H
 #include "inc/BerObject.h"

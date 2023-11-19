@@ -1,3 +1,9 @@
+/**
+ * @file ldap_comunication.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Functions for communication with ldap client
+ * @date 2023-11-19
+ */
 #ifndef LDAP_COMUNICATION_H
 #define LDAP_COMUNICATION_H
 #include "inc/AndFilterObject.h"

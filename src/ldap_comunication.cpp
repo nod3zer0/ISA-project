@@ -1,8 +1,15 @@
+/**
+ * @file ldap_comunication.cpp
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @date 2023-11-19
+ */
 #include "inc/ldap_comunication.h"
 #define DEBUG
 
 BerObject *InitSearchResultEntry(BerObject *searchRequest,
                                  std::vector<unsigned char> LDAPDN) {
+  std::vector<unsigned char> DNprefix = {'u', 'i', 'd', '='};
+  DNprefix.insert(DNprefix.end(), LDAPDN.begin(), LDAPDN.end());
   BerSequenceObject *envelope = new BerSequenceObject();
   envelope->objects.push_back(new BerIntObject(
       static_cast<BerIntObject *>(
@@ -11,7 +18,7 @@ BerObject *InitSearchResultEntry(BerObject *searchRequest,
   BerSequenceObject *PartialAttributeList =
       new BerSequenceObject(BER_SEARCH_RESULT_ENTRY_C);
   envelope->objects.push_back(PartialAttributeList);
-  PartialAttributeList->objects.push_back(new BerStringObject(LDAPDN));
+  PartialAttributeList->objects.push_back(new BerStringObject(DNprefix));
   PartialAttributeList->objects.push_back(new BerSequenceObject());
   return envelope;
 }
@@ -66,12 +73,6 @@ int sendSearchResultDone(BerSequenceObject *searchRequest, int comm_socket,
   return 0;
 }
 
-/**
- * @brief Checks if search request is valid
- *
- * @param searchRequest
- * @return int
- */
 int checkSearchRequest(BerObject *searchRequest) {
 
   // use dynamic casts
@@ -166,18 +167,18 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
   sr.attributes.uid = false;
 
   // cn
-   std::vector<unsigned char> cn = {'c', 'n'};
+  std::vector<unsigned char> cn = {'c', 'n'};
   // CommonName
-   std::vector<unsigned char> CommonName = {'c', 'o', 'm', 'm', 'o',
+  std::vector<unsigned char> CommonName = {'c', 'o', 'm', 'm', 'o',
                                            'n', 'n', 'a', 'm', 'e'};
   // email
-   std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
+  std::vector<unsigned char> email = {'e', 'm', 'a', 'i', 'l'};
   // email
-   std::vector<unsigned char> mail = {'m', 'a', 'i', 'l'};
+  std::vector<unsigned char> mail = {'m', 'a', 'i', 'l'};
   // uid
-   std::vector<unsigned char> uid = {'u', 'i', 'd'};
+  std::vector<unsigned char> uid = {'u', 'i', 'd'};
   // UserID
-   std::vector<unsigned char> UserID = {'u', 's', 'e', 'r', 'i', 'd'};
+  std::vector<unsigned char> UserID = {'u', 's', 'e', 'r', 'i', 'd'};
 
   // getting size limit
   sr.sizeLimit =
@@ -204,13 +205,27 @@ int searchRequestHandler(BerObject *searchRequest, int comm_socket,
 
   for (long unsigned int i = 0; i < attributesSequence->objects.size(); i++) {
 
-    if (ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == cn || ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == CommonName) {
+    if (ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) == cn ||
+        ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) ==
+            CommonName) {
       sr.attributes.cn = true;
     }
-    if (ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == email || ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == mail) {
+    if (ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) ==
+            email ||
+        ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) ==
+            mail) {
       sr.attributes.email = true;
     }
-    if (ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == uid || ToLowerCase(((BerStringObject *)attributesSequence->objects[i])->value) == UserID) {
+    if (ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) ==
+            uid ||
+        ToLowerCase(
+            ((BerStringObject *)attributesSequence->objects[i])->value) ==
+            UserID) {
       sr.attributes.uid = true;
     }
   }
@@ -304,7 +319,7 @@ int loadEnvelope(std::vector<unsigned char> &bindRequest, int comm_socket) {
         break;
       }
       int length = 0;
-      length = buff[1]; // TODO: longform
+      length = buff[1];
 
       bindRequest.insert(bindRequest.end(), buff, buff + resNow);
       // if whole message received, return response

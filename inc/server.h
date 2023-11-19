@@ -1,3 +1,13 @@
+/**
+ * @file server.h
+ * @author your name (you@domain.com)
+ * @brief ldap server implementation
+ * @version 0.1
+ * @date 2023-11-19
+ *
+ * @copyright Copyright (c) 2023
+ *
+ */
 #ifndef SERVER_H
 #define SERVER_H
 #include "inc/BerEnumObject.h"

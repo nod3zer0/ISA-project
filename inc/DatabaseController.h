@@ -1,3 +1,9 @@
+/**
+ * @file DatabaseController.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Controller for database csv file
+ * @date 2023-11-19
+ */
 #ifndef DATABASECONTROLLER_H
 #define DATABASECONTROLLER_H
 #include "inc/DatabaseObject.h"

@@ -1,3 +1,8 @@
+/**
+ * @file server.cpp
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @date 2023-11-19
+ */
 #include "inc/server.h"
 
 // Writes which child died
@@ -33,7 +38,7 @@ void SigIntCatcher(int n) {
  * @param n
  */
 void SigQuitCatcher(int n) {
-  sendNoticeOfDisconnection(childSocket,BER_LDAP_UNAVAILABLE);
+  sendNoticeOfDisconnection(childSocket, BER_LDAP_UNAVAILABLE);
   printf("Dying. %d\n", childSocket);
   close(childSocket);
   exit(0);
@@ -104,21 +109,18 @@ int ldapServer(int port, char *dbPath) {
     exit(EXIT_FAILURE);
   }
   // setup signal handlers
+  //user kills server
   signal(SIGINT, SigIntCatcher);
+  // child dies
   signal(SIGCHLD, SigCatcher);
+  //server kills child
   signal(SIGQUIT, SigQuitCatcher);
 
   // main loop
   while (1) {
-    //seting up child socket
+    // seting up child socket
     childSocket =
         accept(communicationSocket, (struct sockaddr *)&clientSA, &ClientSALen);
-    int flags = fcntl(communicationSocket, F_GETFL, 0);
-    returnCode = fcntl(communicationSocket, F_SETFL, flags | O_NONBLOCK);
-    if (returnCode < 0) {
-      perror("ERROR: fcntl");
-      exit(EXIT_FAILURE);
-    }
     returnCode = fcntl(communicationSocket, F_SETFD, FD_CLOEXEC);
     if (returnCode < 0) {
       perror("ERROR: fcntl");
@@ -127,7 +129,7 @@ int ldapServer(int port, char *dbPath) {
     if (childSocket <= 0)
       continue;
 
-    //spliting into child process and parent process
+    // spliting into child process and parent process
     int pid = fork();
     if (pid < 0) {
       perror("fork() failed");
@@ -199,13 +201,15 @@ int ldapServer(int port, char *dbPath) {
                 EnvelopeObject, BER_LDAP_AUTH_METHOD_NOT_SUPPORTED);
             std::vector<unsigned char> bindResponse =
                 berBindResponse->getBerRepresentation();
-            send(childSocket, &bindResponse[0], bindResponse.size(), MSG_NOSIGNAL);
+            send(childSocket, &bindResponse[0], bindResponse.size(),
+                 MSG_NOSIGNAL);
             delete EnvelopeObject;
             close(childSocket);
             exit(0);
           }
 
-          send(childSocket, &bindResponse[0], bindResponse.size(), MSG_NOSIGNAL);
+          send(childSocket, &bindResponse[0], bindResponse.size(),
+               MSG_NOSIGNAL);
           delete EnvelopeObject;
           break;
         }

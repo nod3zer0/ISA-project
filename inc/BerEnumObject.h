@@ -1,3 +1,10 @@
+/**
+ * @file BerEnumObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Enum object for BER LDAP
+ * @date 2023-11-19
+ */
+
 #ifndef BERENUMOBJECT_H
 #define BERENUMOBJECT_H
 #include "inc/BerObject.h"

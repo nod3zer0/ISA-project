@@ -1,3 +1,9 @@
+/**
+ * @file DatabaseObject.h
+ * @author Rene Ceska xceska06 (xceska06@stud.fit.vutbr.cz)
+ * @brief Object representing one row from database
+ * @date 2023-11-19
+ */
 #ifndef DATABASE_OBJECT_H
 #define DATABASE_OBJECT_H
 #include <fstream>
