@@ -1,9 +1,3 @@
----
-title: ISA - LDAP server
-author: René Češka xceska06 <xceska06@fit.vutbr.cz>
-date: 20.11.2023
----
-
 # Použití
 
 ./isa-ldapserver {-p \<port\>} -f \<soubor\>
