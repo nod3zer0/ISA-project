@@ -1,113 +1,32 @@
-# Použití
+# ISA LDAP Server
 
-./isa-ldapserver {-p \<port\>} -f \<soubor\>
-Význam parametrů a jejich hodnot:
+A multi-client **LDAPv3 server** in **C++20** (ISA course project, FIT VUT Brno). It serves directory data from a CSV file and speaks the LDAP wire protocol end-to-end, with a hand-rolled ASN.1/BER codec.
 
--p \<port\>: Umožňuje specifikovat konkrétní port, na kterém začne server naslouchat požadavkům klientů. Výchozí hodnota čísla portu je 389.
--f \<soubor\>: Cesta k textovému soubor ve formátu CSV.
+## Features
 
-Aplikaci lze ukončit pomocí klávesové zkratky Ctrl+C (SIGINT).
+- **LDAPv3 protocol**: `bind` (simple authentication), `search` requests and responses, `sizeLimit` handling.
+- **Search filters**: equality match, substrings, and recursive boolean composition (`and`, `or`, `not`).
+- **Attribute selection**: clients may request specific attributes; absent/unknown attributes are ignored, no selection returns all.
+- **CSV datastore**: the directory is loaded from a CSV file (`-f`).
+- **IPv4 and IPv6** support.
 
-## Sestavení
+## Design
 
-Sestavení probíhá pomocí příkazu `make`. Výsledkem je spustitelný soubor `isa-ldapserver`. Veškeré zdrojové soubory jsou ve složce src, a hlavičkové soubory ve složce inc.
+- **BER codec as a class hierarchy**: each ASN.1 type is its own `BerObject` subclass (`BerIntObject`, `BerStringObject`, `BerSequenceObject`, …) that encodes/decodes itself — see UML in `img/`.
+- **Filters as objects**: `FilterObject` subclasses (`AndFilterObject`, `OrFilterObject`, `NotFilterObject`, `EqualityMatchFilterObject`, `SubstringFilterObject`) compose recursively, mirroring the LDAP filter grammar.
+- **Notice of Disconnection** extended response when an error cannot be reported via a normal reply.
+- Bind can happen at any point in the session (LDAP3 semantics), which makes adding other auth types easy.
 
-# Popis programu
+## Build
 
-Jedná se o jednoduchý LDAP server, pracující s csv databází. Podporuje simple bind(bind request), a vyhledávání (search request). Z filtrů podporuje pouze equality match, substrings, and, or, not. Podporuje také size limit.
-Server podporuje jak IPv4, tak IPv6.
+```sh
+make         # produces ./isa-ldapserver (C++20, g++)
+```
 
-# Rozšíření oproti zadání
+## Run
 
-## Výběr atributů
+```sh
+./isa-ldapserver -f data.csv [-p 389]
+```
 
-Aplikace podporuje možnost vybrat si jaké atributy chce uživatel vyhledat. V případě, že uživatel nevybere žádný atribut, jsou mu vráceny všechny atributy. Neexistující atributy jsou ignorovány.
-
-## Notice of Disconnection
-
-Pokud dojde k chybě, která nejde oznámit přes odpovídající odpověď na požadavek, je klientovi oznámeno ukončení komunikace pomocí Notice of Disconnection.
-
-## Přihlášení kdykoli
-
-Není třeba se přihlásit před bind requestem, ale je možné se přihlásit kdykoli během komunikace (LDAP3). Jelikož server podporuje jen podporuje jen simple bind, bez autentizace tak to nemá význam. Ale je možné potom velice jednoduše rozšířit aplikaci pro další typy autentizace.
-
-# Příklady spuštění
-
-## Spuštění serveru
-
-### 1. příklad
-
-./isa-ldapserver -p 1234 -f ./data.csv
-
-spustí server na portu 123 a použije databázi data.csv
-
-### 2. příklad
-
-./isa-ldapserver -f ./data.csv
-
-spustí server na portu 389 a použije databázi data.csv
-
-# Seznam souborů
-
-- manual.md
-- manual.pdf
-- Doxyfile
-- Makefile
-- docs/
-  - refman.pdf
-- src/
-  - AndFilterObject.cpp
-  - BerEnumObject.cpp
-  - BerObject.cpp
-  - BerSetObject.cpp
-  - DatabaseController.cpp
-  - EqualityMatchFilterObject.cpp
-  - isa-ldapserver.cpp
-  - OrFilterObject.cpp
-  - argument_helper_functions.cpp
-  - ber_helper_functions.cpp
-  - BerParser.cpp
-  - BerStringObject.cpp
-  - database_helper_functions.cpp
-  - filter_helper_functions.cpp
-  - ldap_comunication.cpp
-  - server.cpp
-  - BerBoolObject.cpp
-  - BerIntObject.cpp
-  - BerSequenceObject.cpp
-  - BerUndefinedObject.cpp
-  - DatabaseObject.cpp
-  - FilterObject.cpp
-  - NotFilterObject.cpp
-  - SubstringFilterObject.cpp
-- inc/
-  - AndFilterObject.h
-  - ber_constants.h
-  - BerIntObject.h
-  - BerSequenceObject.h
-  - BerUndefinedObject.h
-  - DatabaseObject.h
-  - FilterObject.h
-  - OrFilterObject.h
-  - argument_helper_functions.h
-  - BerEnumObject.h
-  - BerObject.h
-  - BerSetObject.h
-  - DatabaseController.h
-  - EqualityMatchFilterObject.h
-  - ldap_comunication.h
-  - server.h
-  - BerBoolObject.h
-  - ber_helper_functions.h
-  - BerParser.h
-  - BerStringObject.h
-  - database_helper_functions.h
-  - filter_helper_functions.h
-  - NotFilterObject.h
-  - SubstringFilterObject.h
-- img/
-  - BerObject-UML.png
-  - FilterObject-UML.png
-- obj/
-
-
+`Ctrl+C` (SIGINT) stops the server. API reference: `docs/refman.pdf` (Doxygen), user manual: `manual.md`.
